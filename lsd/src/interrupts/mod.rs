@@ -1,58 +1,60 @@
-pub enum InterruptTypes {
-    SEIE,               // Unknown
-    UEIE,               // Unknown
-    STIE = 0b100000,    // Supervisor-level timer interrupt
-    UTIE = 0b10000,     // User-level timer interrupts
-    SSIE,               // Unknown
-    USIE                // Unknown
+bitflags::bitflags! {
+    pub struct Sie: u64 {
+        const SEIE = 0b1000000000;    // Supervisor-level external interrupts
+        const UEIE = 0b100000000;     // User-level external interrupts
+        const STIE = 0b100000;        // Supervisor-level timer interrupts
+        const UTIE = 0b10000;         // User-level timer interrupts
+        const SSIE = 0b10;            // Supervisor-level software interrupts
+        const USIE = 0b1;             // User-level software interrupts
+    }
+
+    pub struct Sstatus: u64 {
+        const SIE = 0b10; // Supervisor-level interrupt enable
+    }
 }
 
-impl InterruptTypes {
-    pub fn as_u16(&self) -> u16 {
-        match self {
-            Self::STIE => Self::STIE as u16,
-            Self::UTIE => Self::UTIE as u16,
-            _ => panic!("Interrupt type not implemented")
+impl Sie {
+    /// Unsafe because it enables interrupts
+    pub unsafe fn write_interrupts(&self) {
+        core::arch::asm!(
+            "csrw sie, {}",
+            in(reg) self
+        );
+    }
+
+    pub fn read_interrupts() -> u64 {
+        let state: u64;
+
+        unsafe {
+            core::arch::asm!(
+                "csrr {}, sie",
+                out(reg) state
+            );
         }
+
+        state
     }
+}
 
-    /// Unsafe because it can enable certain interrupts
-    /// Sets the bit enabling an interrupt type
-    pub unsafe fn set_int_type(&self) {
-        let bit = self.as_u16();
-
-        let current: u16;
-
+impl Sstatus {
+    /// Unsafe because it enables interrupts
+    pub unsafe fn write_interrupts(&self) {
         core::arch::asm!(
-            "csrr {}, sie",
-            out(reg) current
-        );
-
-        let res = current | bit;
-
-        core::arch::asm!(
-            "csrw sie, {}",
-            in(reg) res
+            "csrw sstatus, {}",
+            in(reg) self
         );
     }
 
-    /// Unsafe because it can disable certain interrupts
-    /// Clears the bit enabling an interrupt type
-    pub unsafe fn clear_int_type(&self) {
-        let bit_mask = !self.as_u16();
+    pub fn read_interrupts() -> u64 {
+        let state: u64;
 
-        let current: u16;
+        unsafe {
+            core::arch::asm!(
+                "csrr {}, sstatus",
+                out(reg) state
+            );
+        }
 
-        core::arch::asm!(
-            "csrr {}, sie",
-            out(reg) current
-        );
-
-        let res = current & bit_mask;
-
-        core::arch::asm!(
-            "csrw sie, {}",
-            in(reg) res
-        );
+        state
     }
 }

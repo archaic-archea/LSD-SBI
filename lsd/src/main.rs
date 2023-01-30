@@ -11,11 +11,14 @@ extern "C" fn kmain() -> ! {
     unsafe {
         lsd::set_handler_fn(handler);
         log!(Level::Info, "Set vector of handler");
-        interrupts::InterruptTypes::STIE.set_int_type();
-        interrupts::InterruptTypes::UTIE.set_int_type();
+        let sie = interrupts::Sie::all();
+        let sstatus = interrupts::Sstatus::SIE;
+        log!(Level::Debug, "SIE: {:?}, SSTATUS: {:?}", sie, sstatus);
+        sie.write_interrupts();
+        sstatus.write_interrupts();
     }
 
-    sbi::timer::set_timer(1_000_000).expect("Failed to enable timer interrupt");
+    sbi::timer::set_timer(100).expect("Failed to enable timer interrupt");
 
     hcf()
 }
