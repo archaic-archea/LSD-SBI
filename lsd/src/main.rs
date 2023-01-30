@@ -12,10 +12,10 @@ extern "C" fn kmain() -> ! {
         lsd::set_handler_fn(handler);
         log!(Level::Info, "Set vector of handler");
         let sie = interrupts::Sie::all();
-        let sstatus = interrupts::Sstatus::SIE;
+        let sstatus = interrupts::Sstatus::read() | interrupts::Sstatus::SIE;
         log!(Level::Debug, "SIE: {:?}, SSTATUS: {:?}", sie, sstatus);
         sie.write_interrupts();
-        sstatus.write_interrupts();
+        sstatus.write();
     }
 
     sbi::timer::set_timer(100).expect("Failed to enable timer interrupt");

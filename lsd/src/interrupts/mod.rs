@@ -38,14 +38,14 @@ impl Sie {
 
 impl Sstatus {
     /// Unsafe because it enables interrupts
-    pub unsafe fn write_interrupts(&self) {
+    pub unsafe fn write(&self) {
         core::arch::asm!(
             "csrw sstatus, {}",
             in(reg) self
         );
     }
 
-    pub fn read_interrupts() -> u64 {
+    pub fn read() -> Self {
         let state: u64;
 
         unsafe {
@@ -55,6 +55,6 @@ impl Sstatus {
             );
         }
 
-        state
+        unsafe {Self::from_bits_unchecked(state)}
     }
 }
