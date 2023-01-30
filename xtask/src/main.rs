@@ -22,8 +22,8 @@ fn main() -> anyhow::Result<()> {
         Command::Run { debug } => {
             build_kernel()?;
 
-            let debug_log: &[&str] = match debug {
-                true => &["-D", "debug.log"],
+            let debug_log: &[&str] = match true {
+                true => &["-D", "debug.log", "-d", "int,guest_errors"],
                 false => &[],
             };
 
