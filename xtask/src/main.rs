@@ -23,8 +23,8 @@ fn main() -> anyhow::Result<()> {
             build_kernel()?;
 
             let debug_log: &[&str] = match true {
-                //true => &["-D", "debug.log", "-d", "int,guest_errors"],
-                true => &["-d", "int,guest_errors"],
+                true => &["-D", "debug.log", "-d", "int,guest_errors"],
+                //true => &["-d", "int,guest_errors"],
                 false => &[],
             };
 

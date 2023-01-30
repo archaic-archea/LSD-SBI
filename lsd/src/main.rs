@@ -18,7 +18,7 @@ extern "C" fn kmain() -> ! {
         sstatus.write();
     }
 
-    sbi::timer::set_timer(100).expect("Failed to enable timer interrupt");
+    sbi::timer::set_timer(20_000_000).expect("Failed to enable timer interrupt");
 
     hcf()
 }
