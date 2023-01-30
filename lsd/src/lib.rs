@@ -1,4 +1,6 @@
 #![no_std]
+#![feature(fn_align)]
+#![feature(naked_functions)]
 
 pub mod io;
 pub mod interrupts;
@@ -21,6 +23,7 @@ pub fn interrupt_vector() -> u64 {
     x
 }
 
+#[repr(align(4))]
 pub extern "C" fn handler() -> ! {
     use log::{Level, log};
 
