@@ -21,7 +21,7 @@ impl Sie {
     pub unsafe fn write(&self) {
         core::arch::asm!(
             "csrw sie, {}",
-            in(reg) self
+            in(reg) self.bits()
         );
     }
 
@@ -44,7 +44,7 @@ impl Sstatus {
     pub unsafe fn write(&self) {
         core::arch::asm!(
             "csrw sstatus, {}",
-            in(reg) self
+            in(reg) self.bits()
         );
     }
 
