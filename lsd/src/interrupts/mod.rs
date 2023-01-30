@@ -1,19 +1,22 @@
 bitflags::bitflags! {
     pub struct Sie: u64 {
-        const SEIE = 0b1000000000;    // Supervisor-level external interrupts
-        const UEIE = 0b100000000;     // User-level external interrupts
-        const STIE = 0b100000;        // Supervisor-level timer interrupts
-        const UTIE = 0b10000;         // User-level timer interrupts
-        const SSIE = 0b10;            // Supervisor-level software interrupts
-        const USIE = 0b1;             // User-level software interrupts
+        const SEIE = 1 << 9;    // Supervisor-level external interrupts
+        const UEIE = 1 << 8;     // User-level external interrupts
+        const STIE = 1 << 5;        // Supervisor-level timer interrupts
+        const UTIE = 1 << 4;         // User-level timer interrupts
+        const SSIE = 1 << 1;                // Supervisor-level software interrupts
+        const USIE = 1 << 0;                // User-level software interrupts
     }
 
     pub struct Sstatus: u64 {
-        const SIE = 0b10; // Supervisor-level interrupt enable
+        const SIE = 1 << 1; // Supervisor-level interrupt enable
     }
 }
 
 impl Sie {
+    pub fn supervisor_all() -> Self {
+        Self::SEIE | Self::SSIE | Self::STIE
+    }
     /// Unsafe because it enables interrupts
     pub unsafe fn write(&self) {
         core::arch::asm!(
