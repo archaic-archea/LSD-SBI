@@ -11,10 +11,10 @@ extern "C" fn kmain() -> ! {
     unsafe {
         lsd::set_handler_fn(handler);
         log!(Level::Info, "Set vector of handler");
-        let sie = interrupts::Sie::all();
+        let sie = interrupts::Sie::all() | interrupts::Sie::read();
         let sstatus = interrupts::Sstatus::read() | interrupts::Sstatus::SIE;
         log!(Level::Debug, "SIE: {:?}, SSTATUS: {:?}", sie, sstatus);
-        sie.write_interrupts();
+        sie.write();
         sstatus.write();
     }
 
