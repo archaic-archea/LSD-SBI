@@ -15,6 +15,8 @@ pub fn wait(time: Time) {
 }
 
 pub enum Time {
+    Hour(usize),
+    Minute(usize),
     Second(usize),
     Millisecond(usize),
     Microsecond(usize),
@@ -23,6 +25,8 @@ pub enum Time {
 impl Time {
     pub fn as_usize(&self) -> usize {
         match self {
+            Self::Hour(val) => val * unsafe {FREQUENCY} * 3600,
+            Self::Minute(val) => val * unsafe {FREQUENCY} * 60,
             Self::Second(val) => val * unsafe {FREQUENCY},
             Self::Millisecond(val) => (val / 1000) * unsafe {FREQUENCY}, 
             Self::Microsecond(val) => (val / 1000000) * unsafe {FREQUENCY}, 
