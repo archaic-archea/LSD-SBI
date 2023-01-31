@@ -27,8 +27,6 @@ extern "C" fn kmain() -> ! {
         log!(Level::Debug, "SIE: {:?}, SSTATUS: {:?}", sie, sstatus);
         sie.write();
         sstatus.write();
-        
-        core::arch::asm!("ecall");
     }
 
     hcf()
