@@ -1,3 +1,0 @@
-riscv_cpu_do_interrupt: hart:4, async:0, cause:0000000000000002, epc:0x0000000080005f52, tval:0x0000000000000000, desc=illegal_instruction
-riscv_cpu_do_interrupt: hart:4, async:0, cause:0000000000000009, epc:0x000000008020151c, tval:0x0000000000000000, desc=supervisor_ecall
-riscv_cpu_do_interrupt: hart:4, async:1, cause:0000000000000007, epc:0x0000000080201524, tval:0x0000000000000000, desc=m_timer
