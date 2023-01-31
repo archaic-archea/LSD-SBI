@@ -2,31 +2,40 @@
 #![no_std]
 #![no_main]
 
+use log::{log, Level};
+
 extern "C" fn kmain() -> ! {
-    use log::{Level, log};
     use lsd::*;
+
+    let devicetree_ptr: *const u8;
+    unsafe {core::arch::asm!(
+        "mv {}, a1",
+        out(reg) devicetree_ptr
+    );}
 
     io::logger::init();
 
+    log!(Level::Debug, "Found devicetree ptr {:?}", devicetree_ptr);
+
     unsafe {
+        let fdt = fdt::Fdt::from_ptr(devicetree_ptr).expect("Failed to get device tree");
+
         lsd::set_handler_fn(handler);
         log!(Level::Info, "Set vector of handler");
-        let sie = interrupts::Sie::supervisor_all() | interrupts::Sie::read();
-        let sstatus = interrupts::Sstatus::read() | interrupts::Sstatus::SIE;
+        let sie = control_registers::Sie::all() | control_registers::Sie::read();
+        let sstatus = control_registers::Sstatus::read() | control_registers::Sstatus::SIE;
         log!(Level::Debug, "SIE: {:?}, SSTATUS: {:?}", sie, sstatus);
         sie.write();
         sstatus.write();
+        
+        core::arch::asm!("ecall");
     }
-
-    sbi::timer::set_timer(20_000_000).expect("Failed to enable timer interrupt");
 
     hcf()
 }
 
 #[panic_handler]
 fn panic(info: &core::panic::PanicInfo) -> ! {
-    use log::{Level, log};
-
     log!(Level::Error, "{}", info);
     lsd::hcf()
 }
