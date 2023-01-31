@@ -1,4 +1,5 @@
 #![feature(naked_functions)]
+#![feature(asm_sym)]
 #![no_std]
 #![no_main]
 
@@ -14,22 +15,23 @@ extern "C" fn kmain() -> ! {
     );}
 
     io::logger::init();
-
-    log!(Level::Debug, "Found devicetree ptr {:?}", devicetree_ptr);
+    power::init(devicetree_ptr);
+    timing::init(devicetree_ptr);
 
     unsafe {
-        let fdt = fdt::Fdt::from_ptr(devicetree_ptr).expect("Failed to get device tree");
+        let fdt = fdt::Fdt::from_ptr(devicetree_ptr).expect("Failed to get fdt");
 
-        lsd::set_handler_fn(handler);
-        log!(Level::Info, "Set vector of handler");
-        let sie = control_registers::Sie::all() | control_registers::Sie::read();
-        let sstatus = control_registers::Sstatus::read() | control_registers::Sstatus::SIE;
-        log!(Level::Debug, "SIE: {:?}, SSTATUS: {:?}", sie, sstatus);
-        sie.write();
-        sstatus.write();
+        for node in fdt.all_nodes() {
+            log!(Level::Info, "Node: {}", node.name);
+        }
+        
+        let first_core = fdt.cpus().next().unwrap();
+        log!(Level::Info, "Frequency: {}hz", first_core.timebase_frequency());
     }
 
-    hcf()
+    power::power_off().expect("Failed to power off");
+
+    unreachable!();
 }
 
 #[panic_handler]
