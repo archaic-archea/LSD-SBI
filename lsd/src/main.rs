@@ -29,6 +29,8 @@ extern "C" fn kmain() -> ! {
         log!(Level::Info, "Frequency: {}hz", first_core.timebase_frequency());
     }
 
+    timing::wait(timing::Time::Second(4));
+
     power::power_off().expect("Failed to power off");
 
     unreachable!();

@@ -24,8 +24,8 @@ impl Time {
     pub fn as_usize(&self) -> usize {
         match self {
             Self::Second(val) => val * unsafe {FREQUENCY},
-            Self::Millisecond(val) => val * unsafe {FREQUENCY}, 
-            Self::Microsecond(val) => val * unsafe {FREQUENCY}, 
+            Self::Millisecond(val) => (val / 1000) * unsafe {FREQUENCY}, 
+            Self::Microsecond(val) => (val / 1000000) * unsafe {FREQUENCY}, 
         }
     }
 }
