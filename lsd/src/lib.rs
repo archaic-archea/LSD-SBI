@@ -7,7 +7,6 @@ use log::{log, Level};
 
 pub mod io;
 pub mod control_registers;
-pub mod power;
 pub mod interrupts;
 pub mod timing;
 

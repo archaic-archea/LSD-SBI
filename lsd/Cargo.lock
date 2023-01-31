@@ -54,6 +54,7 @@ dependencies = [
  "log",
  "sbi",
  "spin",
+ "syscon-rs",
 ]
 
 [[package]]
@@ -75,4 +76,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f6002a767bff9e83f8eeecf883ecb8011875a21ae8da43bffb817a57e78cc09"
 dependencies = [
  "lock_api",
+]
+
+[[package]]
+name = "syscon-rs"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "870be80fcde0620ce5ce539922d20994954de70090ac9a62b4a7f857d4415b0a"
+dependencies = [
+ "fdt",
+ "log",
 ]

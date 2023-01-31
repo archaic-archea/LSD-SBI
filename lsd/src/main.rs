@@ -5,33 +5,28 @@
 
 use log::{log, Level};
 
-extern "C" fn kmain() -> ! {
+extern "C" fn kmain(_hartid: u64, devicetree_ptr: *const u8) -> ! {
     use lsd::*;
 
-    let devicetree_ptr: *const u8;
-    unsafe {core::arch::asm!(
-        "mv {}, a1",
-        out(reg) devicetree_ptr
-    );}
-
     io::logger::init();
-    power::init(devicetree_ptr);
+    syscon_rs::init(devicetree_ptr);
     timing::init(devicetree_ptr);
 
+    let fdt: fdt::Fdt;
     unsafe {
-        let fdt = fdt::Fdt::from_ptr(devicetree_ptr).expect("Failed to get fdt");
-
-        for node in fdt.all_nodes() {
-            log!(Level::Info, "Node: {}", node.name);
-        }
-        
-        let first_core = fdt.cpus().next().unwrap();
-        log!(Level::Info, "Frequency: {}hz", first_core.timebase_frequency());
+        fdt = fdt::Fdt::from_ptr(devicetree_ptr).expect("Failed to get fdt");
     }
+
+    for node in fdt.all_nodes() {
+        log!(Level::Info, "Node: {}", node.name);
+    }
+    
+    let first_core = fdt.cpus().next().unwrap();
+    log!(Level::Info, "Frequency: {}hz", first_core.timebase_frequency());
 
     timing::wait(timing::Time::Second(4));
 
-    power::power_off().expect("Failed to power off");
+    syscon_rs::power_off().expect("Failed to power off");
 
     unreachable!();
 }
