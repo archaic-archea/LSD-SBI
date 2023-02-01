@@ -19,9 +19,6 @@ extern "C" fn kmain(_hartid: u64, devicetree_ptr: *const u8) -> ! {
     for node in fdt.all_nodes() {
         log!(Level::Info, "Node: {}", node.name);
     }
-    
-    let first_core = fdt.cpus().next().unwrap();
-    log!(Level::Info, "Frequency: {}hz", first_core.timebase_frequency());
 
     timing::wait(timing::Time::Second(4));
 
