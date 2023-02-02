@@ -7,29 +7,29 @@ impl PlicRefer {
 
     pub fn init(&self, max_interrupts: usize, context: usize) {
         for i in 1..max_interrupts {
-            self.priority(i, 0);
+            self.set_priority(i, 0);
         }
 
         for i in 0..max_interrupts {
-            self.disable(context, i);
+            self.disable_int(context, i);
         }
 
-        self.priority_threshold(context, 0);
+        self.threshold_and_claim(context, 0);
     }
 
-    pub fn priority(&self, index: usize, priority: u32) {
+    pub fn set_priority(&self, index: usize, priority: u32) {
         unsafe {
             (*self.0).source_priorities[index] = priority;
         }
     }
 
-    pub fn priority_threshold(&self, context: usize, thresh: u32) {
+    pub fn threshold_and_claim(&self, context: usize, thresh: u32) {
         unsafe {
             (*self.0).threshold_and_claim[context][0] = thresh;
         }
     }
 
-    pub fn enable(&self, context: usize, index: usize) {
+    pub fn enable_int(&self, context: usize, index: usize) {
         let addr = (index >> 5) & 0b11111;
         let bit_addr = index & 0b11111;
 
@@ -38,7 +38,7 @@ impl PlicRefer {
         }
     }
 
-    pub fn disable(&self, context: usize, index: usize) {
+    pub fn disable_int(&self, context: usize, index: usize) {
         let addr = (index >> 5) & 0b11111;
         let bit_addr = index & 0b11111;
 
