@@ -25,26 +25,28 @@ extern "C" fn kmain(_hartid: u64, devicetree_ptr: *const u8) -> ! {
         }
     }
 
-    let uart_node = fdt.find_node("/soc/uart@10000000").unwrap();
+    let uart_node = fdt.find_compatible(uart::Uart16550::compatible()).expect("Failed to find Uart");
     let uart_int = uart_node.property("interrupts").unwrap().as_usize().unwrap();
+    let uart_reg = uart_node.reg().unwrap().next().unwrap();
+    let uart = unsafe {&*(uart_reg.starting_address.cast_mut() as *mut uart::Uart16550)};
 
-    for prop in uart_node.properties() {
-        log!(Level::Info, "Property: {}", prop.name);
-        log!(Level::Info, "Property: 0x{:x}", prop.as_usize().unwrap_or_default());
-    }
+    uart.init();
+    uart.write_str("Uart initialized\n");
 
-    let plic_node = fdt.find_compatible(&["riscv,plic0"]).expect("Failed to get plic");
+    let plic_node = fdt.find_compatible(plic::Plic::compatible()).expect("Failed to find plic");
     let plic_region = plic_node.reg().expect("No plic region").next().unwrap();
     let plic_ref = plic::PlicRefer::new(plic_region.starting_address);
 
-    plic_ref.priority(uart_int, 1);
+    plic_ref.init(1024, 0..1);
+    plic_ref.priority(uart_int, 7);
     plic_ref.enable(0, uart_int);
+    uart.write_str("PLIC initialized");
 
-    timing::wait(timing::Time::Second(8));
+    //timing::wait(timing::Time::Second(8));
 
-    syscon_rs::power_off();
+    //syscon_rs::power_off();
 
-    //hcf();
+    hcf();
 }
 
 #[panic_handler]

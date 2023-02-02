@@ -10,6 +10,8 @@ pub mod control_registers;
 pub mod interrupts;
 pub mod timing;
 pub mod plic;
+pub mod uart;
+pub mod volatile;
 
 pub fn hcf() -> ! {
     loop {
@@ -33,4 +35,8 @@ pub fn core_bootstrap() -> ! {
     log!(Level::Info, "Core started");
 
     hcf();
+}
+
+pub trait Compat {
+    fn compatible() -> &'static [&'static str];
 }
