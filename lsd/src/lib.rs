@@ -9,6 +9,7 @@ pub mod io;
 pub mod control_registers;
 pub mod interrupts;
 pub mod timing;
+pub mod plic;
 
 pub fn hcf() -> ! {
     loop {

@@ -52,10 +52,17 @@ dependencies = [
  "bitflags",
  "fdt",
  "log",
+ "mmio",
  "sbi",
  "spin",
  "syscon-rs",
 ]
+
+[[package]]
+name = "mmio"
+version = "2.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ee857bfd0b37394f3507d78ee7bd4b712a2179a2ce50e47d36bbb481672f5408"
 
 [[package]]
 name = "sbi"
@@ -80,10 +87,11 @@ dependencies = [
 
 [[package]]
 name = "syscon-rs"
-version = "0.1.0"
+version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "870be80fcde0620ce5ce539922d20994954de70090ac9a62b4a7f857d4415b0a"
+checksum = "281bb74efdf3d73018d25c12728a5c0178d795589a0349586d9e2dce618957ec"
 dependencies = [
  "fdt",
  "log",
+ "mmio",
 ]
