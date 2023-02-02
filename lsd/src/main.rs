@@ -23,7 +23,8 @@ extern "C" fn kmain(hartid: usize, devicetree_ptr: *const u8) -> ! {
     let uart = unsafe {&*(uart_reg.starting_address.cast_mut() as *mut uart::Uart16550)};
 
     uart.init();
-    uart.write_str("Uart initialized\n");
+    
+    log!(Level::Info, "UART initialized");
 
     let plic_node = fdt.find_compatible(plic::Plic::compatible()).expect("Failed to find plic");
     let plic_region = plic_node.reg().expect("No plic region").next().unwrap();
@@ -34,7 +35,7 @@ extern "C" fn kmain(hartid: usize, devicetree_ptr: *const u8) -> ! {
     plic_ref.init(11, context);
     plic_ref.set_priority(uart_int, 7);
     plic_ref.enable_int(context, uart_int);
-    uart.write_str("\nPLIC initialized");
+    log!(Level::Info, "PLIC initialized");
 
     hcf();
 }
