@@ -5,18 +5,16 @@ impl PlicRefer {
         Self(ptr.cast_mut() as *mut Plic)
     }
 
-    pub fn init(&self, max_interrupts: usize, contexts: impl Iterator<Item = usize>) {
+    pub fn init(&self, max_interrupts: usize, context: usize) {
         for i in 1..max_interrupts {
             self.priority(i, 0);
         }
 
-        for context in contexts {
-            for i in 0..max_interrupts {
-                self.disable(context, i);
-            }
-
-            self.priority_threshold(context, 0);
+        for i in 0..max_interrupts {
+            self.disable(context, i);
         }
+
+        self.priority_threshold(context, 0);
     }
 
     pub fn priority(&self, index: usize, priority: u32) {

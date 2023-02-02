@@ -37,10 +37,10 @@ extern "C" fn kmain(hartid: usize, devicetree_ptr: *const u8) -> ! {
     let plic_region = plic_node.reg().expect("No plic region").next().unwrap();
     let plic_ref = plic::PlicRefer::new(plic_region.starting_address);
 
-    plic_ref.init(1024, hartid..(hartid + 1));
-    plic_ref.priority(uart_int, 7);
-    plic_ref.enable(hartid, uart_int);
-    uart.write_str("PLIC initialized");
+    plic_ref.init(1024, hartid * 2 + 1);
+    //plic_ref.priority(uart_int, 7);
+    //plic_ref.enable(hartid, uart_int);
+    uart.write_str("\nPLIC initialized");
 
     //timing::wait(timing::Time::Second(8));
 
