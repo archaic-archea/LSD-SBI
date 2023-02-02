@@ -1,3 +1,5 @@
+use core::ptr::addr_of;
+
 pub struct PlicRefer(*mut Plic);
 
 impl PlicRefer {
@@ -29,21 +31,29 @@ impl PlicRefer {
         }
     }
 
-    pub fn enable_int(&self, context: usize, index: usize) {
-        let addr = (index >> 5) & 0b11111;
-        let bit_addr = index & 0b11111;
-
+    pub fn enable_int(&self, context: usize, intr: usize) {
+        let (index, bit) = (intr / 32, intr % 32);
+    
+        log::info!(
+            "[context={context}] Enabling interrupt {intr} @ {:#p} [index={index}, bit={bit}]",
+            unsafe { addr_of!((*self.0).interrupt_enable[context][index]) }
+        );
+    
         unsafe {
-            (*self.0).interrupt_enable[context][addr] |= 1 << bit_addr;
+            (*self.0).interrupt_enable[context][index] |= 1 << bit;
         }
     }
-
-    pub fn disable_int(&self, context: usize, index: usize) {
-        let addr = (index >> 5) & 0b11111;
-        let bit_addr = index & 0b11111;
-
+    
+    pub fn disable_int(&self, context: usize, intr: usize) {
+        let (index, bit) = (intr / 32, intr % 32);
+    
+        log::info!(
+            "[context={context}] Disabling interrupt {intr} @ {:#p} [index={index}, bit={bit}]",
+            unsafe { addr_of!((*self.0).interrupt_enable[context][index]) }
+        );
+    
         unsafe {
-            (*self.0).interrupt_enable[context][addr] &= !(1 << bit_addr);
+            (*self.0).interrupt_enable[context][index] &= !(1 << bit);
         }
     }
 }

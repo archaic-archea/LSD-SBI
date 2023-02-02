@@ -33,7 +33,7 @@ fn main() -> anyhow::Result<()> {
                 qemu-system-riscv64
                     -machine virt
                     -cpu rv64
-                    -smp 8
+                    -smp 1
                     -m 2G
                     -bios opensbi-riscv64-generic-fw_jump.bin
                     -kernel lsd/target/riscv64gc-unknown-none-elf/release/lsd

@@ -10,19 +10,11 @@ extern "C" fn kmain(hartid: usize, devicetree_ptr: *const u8) -> ! {
     io::logger::init();
     syscon_rs::init(devicetree_ptr);
     timing::init(devicetree_ptr);
+    interrupts::init();
 
     let fdt: fdt::Fdt;
     unsafe {
         fdt = fdt::Fdt::from_ptr(devicetree_ptr).expect("Failed to get fdt");
-    }
-
-    for node in fdt.all_nodes() {
-        log!(Level::Info, "Node: {}", node.name);
-        if let Some(compatible) = node.compatible() {
-            for comp in compatible.all() {
-                log!(Level::Info, "compat: {:?}", comp);
-            }
-        }
     }
 
     let uart_node = fdt.find_compatible(uart::Uart16550::compatible()).expect("Failed to find Uart");
@@ -43,10 +35,6 @@ extern "C" fn kmain(hartid: usize, devicetree_ptr: *const u8) -> ! {
     plic_ref.set_priority(uart_int, 7);
     plic_ref.enable_int(context, uart_int);
     uart.write_str("\nPLIC initialized");
-
-    //timing::wait(timing::Time::Second(8));
-
-    //syscon_rs::power_off();
 
     hcf();
 }
