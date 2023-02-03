@@ -1,11 +1,11 @@
 bitflags::bitflags! {
     pub struct Sie: u64 {
         const SEIE = 1 << 9;    // Supervisor-level external interrupts
-        const UEIE = 1 << 8;     // User-level external interrupts
-        const STIE = 1 << 5;        // Supervisor-level timer interrupts
-        const UTIE = 1 << 4;         // User-level timer interrupts
-        const SSIE = 1 << 1;                // Supervisor-level software interrupts
-        const USIE = 1 << 0;                // User-level software interrupts
+        const UEIE = 1 << 8;    // User-level external interrupts
+        const STIE = 1 << 5;    // Supervisor-level timer interrupts
+        const UTIE = 1 << 4;    // User-level timer interrupts
+        const SSIE = 1 << 1;    // Supervisor-level software interrupts
+        const USIE = 1 << 0;    // User-level software interrupts
     }
 
     pub struct Sstatus: u64 {

@@ -34,13 +34,15 @@ extern "C" fn kmain(hartid: usize, devicetree_ptr: *const u8) -> ! {
 
     plic_ref.init(11, context);
     plic_ref.set_priority(uart_int, 7);
-    plic_ref.threshold_and_claim(context, 1);
+    plic_ref.threshold_and_claim(context, 0);
     plic_ref.enable_int(context, uart_int);
     log!(Level::Info, "PLIC initialized");
 
     uart.set_int();
-
-    hcf();
+    log::info!("UART interrupts set");
+    
+    timing::wait(timing::Time::Second(8));
+    syscon_rs::power_off();
 }
 
 #[panic_handler]

@@ -39,6 +39,7 @@ pub extern "C" fn handler() {
 
     match int_vec {
         9223372036854775813 => (),
-        _ => log!(Level::Error, "Error has occured, handler was called with vector: {}", int_vec),
+        2 => log::error!("Illegal instruction encountered"),
+        _ => log::error!("Error has occured, handler was called with vector: {}", int_vec),
     }
 }
