@@ -57,32 +57,28 @@ pub extern "C" fn int_handler() {
 }
 
 fn exception(code: u64) {
-    log!(Level::Error, "Exception generated");
-
     match code {
         2 => log::error!("Illegal instruction"),
-        _ => log::error!("Unknown exception")
+        _ => log::error!("Unknown exception {:b}", code)
     }
 
     super::hcf();
 }
 
 fn interrupt(code: u64) {
-    log!(Level::Info, "Interrupt generated {}", code);
-
     match code {
         5 => unsafe {
             super::timing::WAIT = false;
         },
         9 => plic_int(),
-        _ => log::error!("Error has occured, handler was called with vector: {}", code),
+        _ => log::error!("Error has occured, handler was called with vector: {:b}", code),
     }
 }
 
 fn plic_int() {
     unsafe {
         use crate::plic;
-        let int = plic::PLIC_REF.next(1);
+        let int = plic::PLIC_REF.next(crate::current_context());
         
         if let Some(interrupt) = int {
             match interrupt {

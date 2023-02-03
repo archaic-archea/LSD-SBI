@@ -4,6 +4,7 @@
 
 use log::{log, Level};
 
+
 extern "C" fn kmain(hartid: usize, devicetree_ptr: *const u8) -> ! {
     use lsd::*;
 
@@ -11,6 +12,8 @@ extern "C" fn kmain(hartid: usize, devicetree_ptr: *const u8) -> ! {
     syscon_rs::init(devicetree_ptr);
     timing::init(devicetree_ptr);
     interrupts::init();
+
+    HART_ID.set(hartid);
 
     let fdt: fdt::Fdt;
     unsafe {
@@ -32,18 +35,18 @@ extern "C" fn kmain(hartid: usize, devicetree_ptr: *const u8) -> ! {
     plic::PlicRefer::init_plic_ref(plic_region.starting_address);
     let plic_ref = unsafe {&plic::PLIC_REF};
 
-    let context = hartid * 2 + 1;
-
-    plic_ref.init(11, context);
+    plic_ref.init(11, current_context());
     plic_ref.set_priority(uart_int, 7);
-    plic_ref.threshold_and_claim(context, 0);
-    plic_ref.enable_int(context, uart_int);
+    plic_ref.threshold_and_claim(current_context(), 0);
+    plic_ref.enable_int(current_context(), uart_int);
     log!(Level::Info, "PLIC initialized");
 
     uart.set_int();
     log::info!("UART interrupts set");
     
     timing::wait(timing::Time::Second(8));
+
+    hcf();
     
     syscon_rs::power_off()
 }

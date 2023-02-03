@@ -1,7 +1,11 @@
 #![no_std]
 #![feature(fn_align)]
 #![feature(naked_functions)]
+#![feature(thread_local)]
 #![feature(pointer_byte_offsets)]
+
+#[thread_local]
+pub static HART_ID: core::cell::Cell<usize> = core::cell::Cell::new(0);
 
 use log::{log, Level};
 
@@ -39,4 +43,9 @@ pub fn core_bootstrap() -> ! {
 
 pub trait Compat {
     fn compatible() -> &'static [&'static str];
+}
+
+pub fn current_context() -> usize {
+    #[cfg(not(feature = "platform.sifive_u"))]
+    return 1 + 2 * crate::HART_ID.get();
 }
