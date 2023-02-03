@@ -4,8 +4,12 @@ use structopt::StructOpt;
 enum Command {
     Run {
         #[structopt(long)]
-        debug: bool,
+        _debug: bool,
     },
+    Build {
+        #[structopt(long)]
+        _debug: bool
+    }
 }
 
 fn build_kernel() -> anyhow::Result<()> {
@@ -19,7 +23,10 @@ fn main() -> anyhow::Result<()> {
     let args = Command::from_args();
 
     match args {
-        Command::Run { debug } => {
+        Command::Build { _debug } => {
+            build_kernel()?;
+        },
+        Command::Run { _debug } => {
             build_kernel()?;
 
             let debug_log: &[&str] = match true {
@@ -38,6 +45,7 @@ fn main() -> anyhow::Result<()> {
                     -bios opensbi-riscv64-generic-fw_jump.bin
                     -kernel lsd/target/riscv64gc-unknown-none-elf/release/lsd
                     -serial mon:stdio
+                    -nographic
                     {debug_log...}
             ").run()?;
         }

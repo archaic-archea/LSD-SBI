@@ -21,6 +21,12 @@ pub struct Uart16550 {
 }
 
 impl Uart16550 {
+    pub fn new(ptr: *const u8) -> &'static Self {
+        let self_ptr = ptr.cast_mut() as *mut Self;
+
+        return unsafe {&*self_ptr}
+    }
+
     pub fn set_int(&self) {
         self.interrupt_enable.write(0x1);
     }

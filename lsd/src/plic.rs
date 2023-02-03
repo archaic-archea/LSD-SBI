@@ -1,10 +1,13 @@
 use core::ptr::addr_of;
 
+pub static mut PLIC_REF: PlicRefer = PlicRefer(core::ptr::null_mut());
+
 pub struct PlicRefer(*mut Plic);
 
 impl PlicRefer {
-    pub fn new(ptr: *const u8) -> Self {
-        Self(ptr.cast_mut() as *mut Plic)
+    pub fn init_plic_ref(ptr: *const u8) {
+        let plic_ref = Self(ptr.cast_mut() as *mut Plic);
+        unsafe {PLIC_REF = plic_ref};
     }
 
     pub fn init(&self, max_interrupts: usize, context: usize) {
@@ -64,6 +67,28 @@ impl PlicRefer {
     
         unsafe {
             (*self.0).interrupt_enable[context][index] &= !(1 << bit);
+        }
+    }
+
+    pub fn pending(&self) -> u32 {
+        unsafe {
+            (*self.0).interrupt_pending[0]
+        }
+    }
+
+    pub fn next(&self, context: usize) -> Option<u32> {
+        let id = unsafe {(*self.0).threshold_and_claim[context][1]};
+
+        if id == 0 {
+            None
+        } else {
+            Some(id)
+        }
+    }
+
+    pub fn claim(&self, context: usize, id: u32) {
+        unsafe {
+            (*self.0).threshold_and_claim[context][1] = id;
         }
     }
 }

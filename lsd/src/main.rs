@@ -28,7 +28,9 @@ extern "C" fn kmain(hartid: usize, devicetree_ptr: *const u8) -> ! {
 
     let plic_node = fdt.find_compatible(plic::Plic::compatible()).expect("Failed to find plic");
     let plic_region = plic_node.reg().expect("No plic region").next().unwrap();
-    let plic_ref = plic::PlicRefer::new(plic_region.starting_address);
+    
+    plic::PlicRefer::init_plic_ref(plic_region.starting_address);
+    let plic_ref = unsafe {&plic::PLIC_REF};
 
     let context = hartid * 2 + 1;
 
@@ -42,7 +44,8 @@ extern "C" fn kmain(hartid: usize, devicetree_ptr: *const u8) -> ! {
     log::info!("UART interrupts set");
     
     timing::wait(timing::Time::Second(8));
-    syscon_rs::power_off();
+    
+    syscon_rs::power_off()
 }
 
 #[panic_handler]

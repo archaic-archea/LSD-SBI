@@ -1,4 +1,5 @@
 static mut FREQUENCY: usize = 0;
+pub static mut WAIT: bool = false;
 
 pub fn init(fdt_ptr: *const u8) {
     unsafe {
@@ -11,7 +12,13 @@ pub fn init(fdt_ptr: *const u8) {
 
 pub fn wait(time: Time) {
     sbi::legacy::set_timer(time.as_usize() as u64);
-    super::wfi();
+
+    unsafe {WAIT = true;}
+    while unsafe {WAIT} {
+        super::wfi();
+        super::wfi();
+        super::wfi();
+    }
 }
 
 pub enum Time {
