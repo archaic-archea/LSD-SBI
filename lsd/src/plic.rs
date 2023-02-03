@@ -32,10 +32,15 @@ impl PlicRefer {
     }
 
     pub fn enable_int(&self, context: usize, intr: usize) {
+        // Sanity checks, neither values would be valid
+        if context >= 15872 || intr >= 1024 {
+            return;
+        }
+
         let (index, bit) = (intr / 32, intr % 32);
     
         log::info!(
-            "[context={context}] Enabling interrupt {intr} @ {:#p} [index={index}, bit={bit}]",
+            "[context={context}] Enabling interrupt 0x{intr:x} @ {:#p} [index={index}, bit={bit}]",
             unsafe { addr_of!((*self.0).interrupt_enable[context][index]) }
         );
     
@@ -45,10 +50,15 @@ impl PlicRefer {
     }
     
     pub fn disable_int(&self, context: usize, intr: usize) {
+        // Sanity checks, neither values would be valid
+        if context >= 15872 || intr >= 1024 {
+            return;
+        }
+        
         let (index, bit) = (intr / 32, intr % 32);
     
         log::info!(
-            "[context={context}] Disabling interrupt {intr} @ {:#p} [index={index}, bit={bit}]",
+            "[context={context}] Disabling interrupt 0x{intr:x} @ {:#p} [index={index}, bit={bit}]",
             unsafe { addr_of!((*self.0).interrupt_enable[context][index]) }
         );
     

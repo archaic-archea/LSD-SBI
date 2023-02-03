@@ -21,6 +21,14 @@ pub struct Uart16550 {
 }
 
 impl Uart16550 {
+    pub fn set_int(&self) {
+        self.interrupt_enable.write(0x1);
+    }
+
+    pub fn clear_int(&self) {
+        self.interrupt_enable.write(0x0);
+    }
+
     pub fn init(&self) {
         self.line_control.write(0x03);
         self.int_id_fifo_control.write(0x01);
@@ -31,7 +39,7 @@ impl Uart16550 {
 
         // Full speed, baybee
         self.data_register.write(1);
-        self.interrupt_enable.write(0x1);
+        self.interrupt_enable.write(0x0);
 
         self.line_control.write(lcr);
 
