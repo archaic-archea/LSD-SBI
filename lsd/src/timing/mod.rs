@@ -16,8 +16,6 @@ pub fn wait(time: Time) {
     unsafe {WAIT = true;}
     while unsafe {WAIT} {
         super::wfi();
-        super::wfi();
-        super::wfi();
     }
 }
 
