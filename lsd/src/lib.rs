@@ -17,6 +17,23 @@ pub mod plic;
 pub mod uart;
 pub mod volatile;
 
+pub fn init_tp() {
+    extern {
+        static __tdata_start: ();
+        static __tdata_end: ();
+    }
+
+    let start = unsafe { core::ptr::addr_of!(__tdata_start).cast_mut() };
+    let _end = unsafe { core::ptr::addr_of!(__tdata_end).cast_mut() };
+
+    unsafe {
+        core::arch::asm!(
+            "mv tp, {}",
+            in(reg) start
+        )
+    }
+}
+
 pub fn hcf() -> ! {
     loop {
         unsafe { core::arch::asm!("wfi") };

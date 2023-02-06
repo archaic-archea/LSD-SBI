@@ -8,6 +8,7 @@ use log::{log, Level};
 extern "C" fn kmain(hartid: usize, devicetree_ptr: *const u8) -> ! {
     use lsd::*;
 
+    init_tp();
     io::logger::init();
     syscon_rs::init(devicetree_ptr);
     timing::init(devicetree_ptr);
