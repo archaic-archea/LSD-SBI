@@ -44,8 +44,6 @@ extern "C" fn kmain(hartid: usize, devicetree_ptr: *const u8) -> ! {
 
     uart.set_int();
     log::info!("UART interrupts set");
-    
-    timing::wait(timing::Time::Second(8));
 
     hcf();
     
