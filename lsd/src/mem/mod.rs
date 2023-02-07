@@ -21,6 +21,8 @@ pub struct Memmap {
     _unknown: (*const u8, usize), //not sure whats here 
     kernel: (*const u8, usize),
     pub heap: (*mut u8, usize),
+    pub stack: (*mut u8, usize),
+    pub interrupt_stack: (*mut u8, usize),
     pub free: (*mut u8, usize),
 }
 
@@ -31,6 +33,8 @@ impl Memmap {
             _unknown: (core::ptr::null(), 0), 
             kernel: (core::ptr::null(), 0),
             heap: (core::ptr::null_mut(), 0),
+            stack: (core::ptr::null_mut(), 0),
+            interrupt_stack: (core::ptr::null_mut(), 0),
             free: (core::ptr::null_mut(), 0),
         }
     }
@@ -59,14 +63,23 @@ pub fn memory_map(devicetree_ptr: *const u8) {
     let heap_base = unsafe {kernel_base.add(kernel_len).cast_mut()};
     let heap_len = 0x4000;
 
+    
+    let stack_len = 0x100000;
+    let stack_base = unsafe {align_up(heap_base.add(heap_len).add(stack_len) as usize, 16)} as *mut u8;
+
+    let int_stack_len = 0x100000;
+    let int_stack_base = unsafe {align_up(stack_base.add(stack_len).add(int_stack_len) as usize, 16)} as *mut u8;
+
     let free_base = unsafe {heap_base.add(heap_len)};
-    let free_len = mem_len - (kernel_len + unknown_len + heap_len);
+    let free_len = mem_len - (kernel_len + unknown_len + heap_len + stack_len + int_stack_len);
 
     let mut memmap = MEMMAP.lock();
     memmap.mem = (mem_base, mem_len);
     memmap._unknown = (unknown_base, unknown_len);
     memmap.kernel = (kernel_base, kernel_len);
     memmap.heap = (heap_base, heap_len);
+    memmap.stack = (stack_base, stack_len);
+    memmap.interrupt_stack = (int_stack_base, int_stack_len);
     memmap.free = (free_base, free_len);
 }
 

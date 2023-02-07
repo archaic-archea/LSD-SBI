@@ -1,4 +1,6 @@
 #![feature(naked_functions)]
+#![feature(layout_for_ptr)]
+#![feature(pointer_is_aligned)]
 #![no_std]
 #![no_main]
 
@@ -15,6 +17,20 @@ extern "C" fn kmain(hartid: usize, devicetree_ptr: *const u8) -> ! {
     timing::init(devicetree_ptr);
     interrupts::init();
     mem::init(devicetree_ptr);
+
+    let memmap = mem::MEMMAP.lock();
+
+    unsafe {
+        let stack_ptr = memmap.stack.0;
+
+        let alignment = stack_ptr.is_aligned_to(16);
+        log::info!("aligned: {}", alignment);
+        core::arch::asm!(
+            "mv sp, {}",
+            in(reg) stack_ptr
+        );
+    }
+
     plic::init(devicetree_ptr, current_context());
 
 
