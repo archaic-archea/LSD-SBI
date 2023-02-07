@@ -72,7 +72,8 @@ pub extern "C" fn int_handler() {
                 2:
                     call handler
                     sret
-            ", options(noreturn)
+            ",
+            options(noreturn)
         )
     }
 }

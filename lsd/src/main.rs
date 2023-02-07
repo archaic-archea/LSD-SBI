@@ -18,9 +18,8 @@ extern "C" fn kmain(hartid: usize, devicetree_ptr: *const u8) -> ! {
     interrupts::init();
     mem::init(devicetree_ptr);
 
-    let memmap = mem::MEMMAP.lock();
-
     unsafe {
+        let memmap = &mut mem::MEMMAP;
         let stack_ptr = memmap.stack.0;
 
         let alignment = stack_ptr.is_aligned_to(16);

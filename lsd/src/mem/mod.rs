@@ -1,4 +1,3 @@
-use spin::Mutex;
 mod linked_list;
 
 use linked_list::LinkedListAllocator;
@@ -6,12 +5,14 @@ use linked_list::LinkedListAllocator;
 #[global_allocator]
 static ALLOCATOR: Locked<LinkedListAllocator> = Locked::new(LinkedListAllocator::new());
 
-pub static MEMMAP: Mutex<Memmap> = Mutex::new(Memmap::null());
+// This should only be editted once, so help me if you try to for a 2nd time I am going to throw you down the stairs
+#[no_mangle]
+pub static mut MEMMAP: Memmap = Memmap::null();
 
 pub fn init(devicetree_ptr: *const u8) {
     memory_map(devicetree_ptr);
     unsafe {
-        let heap_data = MEMMAP.lock().heap;
+        let heap_data = MEMMAP.heap;
         ALLOCATOR.lock().init(heap_data.0 as usize, heap_data.1);
     }
 }
@@ -67,13 +68,13 @@ pub fn memory_map(devicetree_ptr: *const u8) {
     let stack_len = 0x100000;
     let stack_base = unsafe {align_up(heap_base.add(heap_len).add(stack_len) as usize, 16)} as *mut u8;
 
-    let int_stack_len = 0x100000;
+    let int_stack_len = 0x10000;
     let int_stack_base = unsafe {align_up(stack_base.add(stack_len).add(int_stack_len) as usize, 16)} as *mut u8;
 
     let free_base = unsafe {heap_base.add(heap_len)};
     let free_len = mem_len - (kernel_len + unknown_len + heap_len + stack_len + int_stack_len);
 
-    let mut memmap = MEMMAP.lock();
+    let memmap = unsafe {&mut MEMMAP};
     memmap.mem = (mem_base, mem_len);
     memmap._unknown = (unknown_base, unknown_len);
     memmap.kernel = (kernel_base, kernel_len);
