@@ -31,7 +31,10 @@ impl PlicRefer {
         for i in 1..max_interrupts {
             self.set_priority(i, 0);
         }
-        log::info!("Test"); // Idk why but if I remove this it breaks
+
+        for _ in 0..16 {
+            unsafe {core::arch::asm!("nop");}
+        } // Load bearing nop
 
         for i in 0..max_interrupts {
             self.disable_int(context, i);
