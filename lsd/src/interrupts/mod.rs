@@ -111,22 +111,7 @@ fn plic_int() {
         if let Some(interrupt) = int {
             match interrupt {
                 10 => {
-                    let my_uart = crate::uart::Uart16550::new(0x1000_0000 as *const u8);
-                    
-                    let character = my_uart.read();
-                    match character {
-                        8 => {
-                            my_uart.write(8);
-                            my_uart.write(b' ');
-                            my_uart.write(8);
-                        },
-                        10 | 13 => {
-                            my_uart.write(b'\n');
-                        },
-                        _ => {
-                            crate::log_print!("{}", character as char);
-                        },
-                    }
+                    uart();
                 },
                 _ => {
                     log::error!("Unrecognized external interrupt: {}", interrupt);
@@ -135,5 +120,24 @@ fn plic_int() {
 
             plic::PLIC_REF.claim(crate::current_context(), interrupt);
         }
+    }
+}
+
+fn uart() {
+    let my_uart = crate::uart::Uart16550::new(0x1000_0000 as *const u8);
+    
+    let character = my_uart.read();
+    match character {
+        8 => {
+            my_uart.write(8);
+            my_uart.write(b' ');
+            my_uart.write(8);
+        },
+        10 | 13 => {
+            my_uart.write(b'\n');
+        },
+        _ => {
+            crate::log_print!("{}", character as char);
+        },
     }
 }

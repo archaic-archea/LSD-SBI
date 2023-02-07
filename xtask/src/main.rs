@@ -41,7 +41,7 @@ fn main() -> anyhow::Result<()> {
                     -machine virt
                     -cpu rv64
                     -smp 1
-                    -m 2G
+                    -m 256M
                     -bios opensbi-riscv64-generic-fw_jump.bin
                     -kernel lsd/target/riscv64gc-unknown-none-elf/release/lsd
                     -serial mon:stdio

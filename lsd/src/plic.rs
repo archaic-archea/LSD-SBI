@@ -2,6 +2,23 @@ use core::ptr::addr_of;
 
 pub static mut PLIC_REF: PlicRefer = PlicRefer(core::ptr::null_mut());
 
+pub fn init(devicetree_ptr: *const u8, context: usize) {
+    use crate::Compat;
+
+    let fdt: fdt::Fdt;
+    unsafe {
+        fdt = fdt::Fdt::from_ptr(devicetree_ptr).unwrap();
+    }
+
+    let plic_node = fdt.find_compatible(Plic::compatible()).expect("Failed to find plic");
+    let plic_region = plic_node.reg().expect("No plic region").next().unwrap();
+    
+    PlicRefer::init_plic_ref(plic_region.starting_address);
+    let plic_ref = unsafe {&PLIC_REF};
+
+    plic_ref.init(11, context);
+}
+
 pub struct PlicRefer(*mut Plic);
 
 impl PlicRefer {
@@ -14,6 +31,7 @@ impl PlicRefer {
         for i in 1..max_interrupts {
             self.set_priority(i, 0);
         }
+        log::info!("Test"); // Idk why but if I remove this it breaks
 
         for i in 0..max_interrupts {
             self.disable_int(context, i);
@@ -87,9 +105,14 @@ impl PlicRefer {
     }
 
     pub fn claim(&self, context: usize, id: u32) {
-        unsafe {
-            (*self.0).threshold_and_claim[context][1] = id;
+        // Sanity checks, neither values would be valid
+        if context >= 15872 || id >= 1024 {
+            return;
         }
+
+        let threshold_and_claim = unsafe {&mut (*self.0).threshold_and_claim};
+
+        threshold_and_claim[context][1] = id;
     }
 }
 

@@ -5,4 +5,4 @@ target = "riscv64gc-unknown-none-elf"
 rustflags = "-C link-arg=-Tvirt.lds"
 
 [unstable]
-build-std = ["core"]
+build-std = ["core", "alloc"]

@@ -4,6 +4,7 @@
 
 use log::{log, Level};
 
+extern crate alloc;
 
 extern "C" fn kmain(hartid: usize, devicetree_ptr: *const u8) -> ! {
     use lsd::*;
@@ -13,8 +14,9 @@ extern "C" fn kmain(hartid: usize, devicetree_ptr: *const u8) -> ! {
     syscon_rs::init(devicetree_ptr);
     timing::init(devicetree_ptr);
     interrupts::init();
+    mem::init(devicetree_ptr);
+    plic::init(devicetree_ptr, current_context());
 
-    HART_ID.set(hartid);
 
     let fdt: fdt::Fdt;
     unsafe {
@@ -30,17 +32,13 @@ extern "C" fn kmain(hartid: usize, devicetree_ptr: *const u8) -> ! {
     
     log!(Level::Info, "UART initialized");
 
-    let plic_node = fdt.find_compatible(plic::Plic::compatible()).expect("Failed to find plic");
-    let plic_region = plic_node.reg().expect("No plic region").next().unwrap();
-    
-    plic::PlicRefer::init_plic_ref(plic_region.starting_address);
     let plic_ref = unsafe {&plic::PLIC_REF};
 
-    plic_ref.init(11, current_context());
-    plic_ref.set_priority(uart_int, 7);
-    plic_ref.threshold_and_claim(current_context(), 0);
-    plic_ref.enable_int(current_context(), uart_int);
     log!(Level::Info, "PLIC initialized");
+
+    plic_ref.threshold_and_claim(current_context(), 0);
+    plic_ref.set_priority(uart_int, 7);
+    plic_ref.enable_int(current_context(), uart_int);
 
     uart.set_int();
     log::info!("UART interrupts set");
@@ -55,7 +53,6 @@ fn panic(info: &core::panic::PanicInfo) -> ! {
     log!(Level::Error, "{}", info);
     lsd::hcf()
 }
-
 
 #[naked]
 #[no_mangle]

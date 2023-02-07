@@ -3,9 +3,14 @@
 #![feature(naked_functions)]
 #![feature(thread_local)]
 #![feature(pointer_byte_offsets)]
+#![feature(const_mut_refs)]
+
+extern crate alloc;
 
 #[thread_local]
 pub static HART_ID: core::cell::Cell<usize> = core::cell::Cell::new(0);
+
+pub static CHAR_BUF: spin::Mutex<[char; 64]> = spin::Mutex::new([0 as char; 64]);
 
 use log::{log, Level};
 
@@ -16,6 +21,8 @@ pub mod timing;
 pub mod plic;
 pub mod uart;
 pub mod volatile;
+pub mod mem;
+pub mod utils;
 
 pub fn init_tp() {
     extern {
