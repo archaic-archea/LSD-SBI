@@ -1,6 +1,9 @@
-extern "C" {
+extern {
     pub static KERNEL_START: LinkerSymbol;
     pub static KERNEL_END: LinkerSymbol;
+    pub static __tdata_start: LinkerSymbol;
+    pub static __tdata_end: LinkerSymbol;
+    pub static __global_pointer: LinkerSymbol;
 }
 
 pub struct LinkerSymbol();

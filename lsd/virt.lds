@@ -30,7 +30,7 @@ SECTIONS {
     . = ALIGN(8);
 
     .sdata : {
-        PROVIDE(__global_pointer$ = .);
+        PROVIDE(__global_pointer = .);
         *(.sdata .sdata.*)       
         . = ALIGN(4K);
         PROVIDE(__data_end = .); 

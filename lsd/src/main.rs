@@ -15,10 +15,12 @@ extern "C" fn kmain(hartid: usize, devicetree_ptr: *const u8) -> ! {
     io::logger::init();
     syscon_rs::init(devicetree_ptr);
     timing::init(devicetree_ptr);
-    interrupts::init();
     mem::init(devicetree_ptr);
+    interrupts::init();
 
     unsafe {
+        HART_ID.store(hartid, core::sync::atomic::Ordering::Relaxed);
+
         let memmap = &mut mem::MEMMAP;
         let stack_ptr = memmap.stack.0;
 

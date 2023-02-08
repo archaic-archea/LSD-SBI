@@ -17,6 +17,8 @@ pub fn init(devicetree_ptr: *const u8, context: usize) {
     let plic_ref = unsafe {&PLIC_REF};
 
     plic_ref.init(11, context);
+
+    plic_ref.claim(crate::current_context());
 }
 
 pub struct PlicRefer(*mut Plic);
@@ -91,14 +93,16 @@ impl PlicRefer {
         }
     }
 
-    pub fn pending(&self) -> u32 {
+    pub fn claim(&self, context: usize) -> u32 {
         unsafe {
-            (*self.0).interrupt_pending[0]
+            (*self.0).threshold_and_claim[context][1]
         }
     }
 
     pub fn next(&self, context: usize) -> Option<u32> {
         let id = unsafe {(*self.0).threshold_and_claim[context][1]};
+
+        crate::reach_loop();
 
         if id == 0 {
             None
@@ -107,7 +111,7 @@ impl PlicRefer {
         }
     }
 
-    pub fn claim(&self, context: usize, id: u32) {
+    pub fn complete(&self, context: usize, id: u32) {
         // Sanity checks, neither values would be valid
         if context >= 15872 || id >= 1024 {
             return;

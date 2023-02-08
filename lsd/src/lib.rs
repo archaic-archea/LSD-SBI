@@ -4,11 +4,14 @@
 #![feature(thread_local)]
 #![feature(pointer_byte_offsets)]
 #![feature(const_mut_refs)]
+#![feature(asm_const)]
 
 extern crate alloc;
 
+use core::sync::atomic;
+
 #[thread_local]
-pub static HART_ID: core::cell::Cell<usize> = core::cell::Cell::new(0);
+pub static HART_ID: atomic::AtomicUsize = atomic::AtomicUsize::new(0);
 
 pub static CHAR_BUF: spin::Mutex<[char; 64]> = spin::Mutex::new([0 as char; 64]);
 
@@ -23,6 +26,13 @@ pub mod uart;
 pub mod volatile;
 pub mod mem;
 pub mod utils;
+
+pub fn reach_loop() {
+    log::info!("Reached loop");
+    loop {
+        crate::wfi();
+    }
+}
 
 pub fn init_tp() {
     extern {
@@ -71,5 +81,5 @@ pub trait Compat {
 
 pub fn current_context() -> usize {
     #[cfg(not(feature = "platform.sifive_u"))]
-    return 1 + 2 * crate::HART_ID.get();
+    return 1 + 2 * crate::HART_ID.load(atomic::Ordering::Relaxed);
 }
