@@ -1,4 +1,6 @@
 mod linked_list;
+pub mod paging;
+pub mod addressing;
 
 use linked_list::LinkedListAllocator;
 
@@ -15,6 +17,9 @@ pub fn init(devicetree_ptr: *const u8) {
         let heap_data = MEMMAP.heap;
         ALLOCATOR.lock().init(heap_data.0 as usize, heap_data.1);
     }
+
+    let free = unsafe {MEMMAP.free.1} / 1048576;
+    log::info!("Free memory: {}MiB", free);
 }
 
 pub struct Memmap {

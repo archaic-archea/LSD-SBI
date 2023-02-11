@@ -1,6 +1,11 @@
 use log::{log, Level};
 
-static mut INT_FRAME: TrapFrame = TrapFrame { sepc: 0, registers: GeneralRegisters::null() };
+static mut INT_SSCRATCH: Sscratch = Sscratch { 
+    kernel_stack_top: core::ptr::null_mut(),
+    kernel_thread_local: core::ptr::null_mut(),
+    kernel_global_ptr: core::ptr::null_mut(),
+    scratch_sp: 0
+};
 
 pub fn init() {
     use super::control_registers;
@@ -14,12 +19,14 @@ pub fn init() {
         sie.write();
         sstatus.write();
 
-        INT_FRAME.sepc = crate::mem::MEMMAP.interrupt_stack.0 as usize;
-        let frame_ref = (&INT_FRAME as *const TrapFrame) as usize;
+        INT_SSCRATCH.kernel_thread_local = crate::utils::linker::__tdata_start.as_ptr().cast_mut();
+        INT_SSCRATCH.kernel_global_ptr = crate::utils::linker::__global_pointer.as_ptr().cast_mut();
+        INT_SSCRATCH.kernel_stack_top = crate::mem::MEMMAP.interrupt_stack.0;
+        let sscratch_ref = (&INT_SSCRATCH as *const Sscratch) as usize;
 
         core::arch::asm!(
             "csrw sscratch, {}",
-            in(reg) frame_ref
+            in(reg) sscratch_ref
         )
     }
 }
@@ -61,6 +68,13 @@ pub struct TrapFrame {
     pub registers: GeneralRegisters,
 }
 
+#[repr(C)]
+pub struct Sscratch {
+    pub kernel_stack_top: *mut u8,
+    pub kernel_thread_local: *mut u8,
+    pub kernel_global_ptr: *mut u8,
+    pub scratch_sp: usize,
+}
 
 // Repnops code... again... ty, Vanadinite
 #[naked]
@@ -308,18 +322,26 @@ fn interrupt(code: u64) {
         5 => unsafe {
             super::timing::WAIT = false;
         },
-        9 => plic_int(),
+        9 => {
+            plic_int()
+        },
         _ => log::error!("Error has occured, handler was called with vector: {:b}", code),
     }
 }
 
 fn plic_int() {
-    unsafe {
-        use crate::plic;
-        let int = plic::PLIC_REF.claim(crate::current_context());
-        crate::reach_loop();
+    use crate::plic;
 
-        if int != 0 {
+    let context = crate::current_context();
+
+    let plic = unsafe {&mut *plic::PLIC_REF};
+    let pot_int = plic.claim(context);
+
+    match pot_int {
+        None => (),
+        Some(int_claim) => {
+            let int = int_claim.interrupt_id();
+
             match int {
                 10 => {
                     uart();
@@ -329,7 +351,7 @@ fn plic_int() {
                 }
             }
 
-            plic::PLIC_REF.complete(crate::current_context(), int);
+            int_claim.complete();
         }
     }
 }

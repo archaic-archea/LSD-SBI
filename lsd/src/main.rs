@@ -17,23 +17,8 @@ extern "C" fn kmain(hartid: usize, devicetree_ptr: *const u8) -> ! {
     timing::init(devicetree_ptr);
     mem::init(devicetree_ptr);
     interrupts::init();
-
-    unsafe {
-        HART_ID.store(hartid, core::sync::atomic::Ordering::Relaxed);
-
-        let memmap = &mut mem::MEMMAP;
-        let stack_ptr = memmap.stack.0;
-
-        let alignment = stack_ptr.is_aligned_to(16);
-        log::info!("aligned: {}", alignment);
-        core::arch::asm!(
-            "mv sp, {}",
-            in(reg) stack_ptr
-        );
-    }
-
-    plic::init(devicetree_ptr, current_context());
-
+    HART_ID.store(hartid, core::sync::atomic::Ordering::Relaxed);
+    plic::init(devicetree_ptr, current_context()..current_context() + 1);
 
     let fdt: fdt::Fdt;
     unsafe {
@@ -46,23 +31,71 @@ extern "C" fn kmain(hartid: usize, devicetree_ptr: *const u8) -> ! {
     let uart = unsafe {&*(uart_reg.starting_address.cast_mut() as *mut uart::Uart16550)};
 
     uart.init();
-    
-    log!(Level::Info, "UART initialized");
-
-    let plic_ref = unsafe {&plic::PLIC_REF};
-
-    log!(Level::Info, "PLIC initialized");
-
-    plic_ref.threshold_and_claim(current_context(), 0);
-    plic_ref.set_priority(uart_int, 7);
-    plic_ref.enable_int(current_context(), uart_int);
-
     uart.set_int();
-    log::info!("UART interrupts set");
+
+    let plic_ref = unsafe {&mut *plic::PLIC_REF};
+
+    plic_ref.set_context_threshold(current_context(), 0);
+    plic_ref.set_interrupt_priority(uart_int, 7);
+    plic_ref.enable_interrupt(current_context(), uart_int);
+
+    let mut paging_type = mem::paging::PagingType::Sv39;
+
+    for node in fdt.all_nodes() {
+        /*if node.name.contains("virtio_mmio") {
+            match node.reg() {
+                Some(region_iter) => {
+                    for reg in region_iter {
+                        log::info!("Found region");
+                        let header = unsafe {
+                            let ptr = reg.starting_address;
+
+                            &*(ptr as *const virtio::VirtIoHeader)
+                        };
+
+                        log::info!("virtio valid: {:?}", header.valid_magic());
+                        log::info!("virtio type: {:?}", header.device_type());
+                    }
+                },
+                None => ()
+            }
+        }*/
+
+        if node.name.contains("cpu@") {
+            log::info!("Node: {} {{", node.name);
+            for prop in node.properties() {
+                log::info!("    Cpu property: {}", prop.name);
+                log::info!("        {}: {:?}", prop.name, prop.as_str());
+            }
+            log::info!("}}");
+
+            let mmu_type = node.property("mmu-type").expect("No MMu type");
+            paging_type = mem::paging::PagingType::from_str(mmu_type.as_str().unwrap()).expect("Invalid MMU type");
+        } else {
+            log::info!("Node: {}", node.name);
+        }
+    }
+
+    log::info!("Paging type: {:?}", paging_type);
+
+    let memmap_free = unsafe {mem::MEMMAP.free};
+    let free_limit = unsafe {memmap_free.0.add(memmap_free.1)};
+    log::info!("Free base:   {:#?}", memmap_free.0);
+    log::info!("Free limit:  {:#?}\n", free_limit);
+
+    let mem = unsafe {mem::MEMMAP.mem};
+    let limit = unsafe {mem.0.add(mem.1)};
+    log::info!("Mem base:    {:#?}", mem.0);
+    log::info!("Mem length:  {:#?}", limit);
+    log::info!("Mem limit:   {:#?}", mem.1);
+
+    unsafe {
+        *free_limit = 0;
+        *free_limit.add(1) = 0;
+        *limit.cast_mut().sub(1) = 0;
+    }
 
     hcf();
-    
-    syscon_rs::power_off()
 }
 
 #[panic_handler]

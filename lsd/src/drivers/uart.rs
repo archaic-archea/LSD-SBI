@@ -6,7 +6,7 @@
 // v. 2.0. If a copy of the MPL was not distributed with this file, You can
 // obtain one at https://mozilla.org/MPL/2.0/.
 
-use super::volatile::Volatile;
+use crate::volatile::Volatile;
 
 #[repr(C)]
 pub struct Uart16550 {
@@ -100,7 +100,7 @@ impl Uart16550 {
     }
 }
 
-impl super::Compat for Uart16550 {
+impl crate::Compat for Uart16550 {
     fn compatible() -> &'static [&'static str] {
         &["ns16550", "ns16550a"]
     }

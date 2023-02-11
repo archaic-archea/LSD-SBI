@@ -42,10 +42,13 @@ fn main() -> anyhow::Result<()> {
                     -cpu rv64
                     -smp 1
                     -m 2G
+                    -global virtio-mmio.force-legacy=false
+                    -object rng-random,filename=/dev/urandom,id=rng0 
+                    -device virtio-rng-device,rng=rng0 
+                    -device virtio-gpu-device
                     -bios opensbi-riscv64-generic-fw_jump.bin
                     -kernel lsd/target/riscv64gc-unknown-none-elf/release/lsd
                     -serial mon:stdio
-                    -nographic
                     {debug_log...}
             ").run()?;
         }

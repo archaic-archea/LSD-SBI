@@ -21,24 +21,22 @@ pub mod io;
 pub mod control_registers;
 pub mod interrupts;
 pub mod timing;
-pub mod plic;
-pub mod uart;
 pub mod volatile;
 pub mod mem;
 pub mod utils;
+pub mod drivers;
 
-pub fn reach_loop() {
-    log::info!("Reached loop");
+pub use drivers::*;
+
+pub fn reach_loop(msg: &str) {
+    log::info!("{}", msg);
     loop {
         crate::wfi();
     }
 }
 
 pub fn init_tp() {
-    extern {
-        static __tdata_start: ();
-        static __tdata_end: ();
-    }
+    use utils::linker::{__tdata_start, __tdata_end};
 
     let start = unsafe { core::ptr::addr_of!(__tdata_start).cast_mut() };
     let _end = unsafe { core::ptr::addr_of!(__tdata_end).cast_mut() };

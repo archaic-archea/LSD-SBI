@@ -6,7 +6,8 @@ extern {
     pub static __global_pointer: LinkerSymbol;
 }
 
-pub struct LinkerSymbol();
+#[repr(C)]
+pub struct LinkerSymbol(u8);
 
 impl LinkerSymbol {
     pub fn as_ptr(&self) -> *const u8 {

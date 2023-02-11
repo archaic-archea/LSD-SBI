@@ -12,6 +12,10 @@ impl Bitmap {
         let byte_addr = index >> 3;
         let bit_addr = index & 0b111;
 
+        if byte_addr >= self.size {
+            panic!("Attempted into index {} byte(s) into a {} byte sized bitmap", byte_addr, self.size);
+        }
+
         unsafe {
             let byte =  self.buffer.add(byte_addr).read_volatile();
 
@@ -22,6 +26,10 @@ impl Bitmap {
     pub fn set(&mut self, index: usize) {
         let byte_addr = index >> 3;
         let bit_addr = index & 0b111;
+
+        if byte_addr >= self.size {
+            panic!("Attempted into index {} byte(s) into a {} byte sized bitmap", byte_addr, self.size);
+        }
 
         unsafe {
             let read = self.buffer.add(byte_addr).read_volatile();
