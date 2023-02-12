@@ -32,18 +32,32 @@ impl Mapper {
         let sections = virt.sections();
 
         let ppn1_entry = self.root[sections.vpn2 as usize];
-        let ppn1: &mut PageTable = match self.page_check(ppn1_entry) {
+        let ppn1_ptr: *mut PageTable = match self.page_check(ppn1_entry) {
             None => return Err(MappingError::Gigapage),
-            Some(ptr) => unsafe {&mut *ptr}
+            Some(ptr) => ptr
         };
+        let ppn1 = unsafe {&mut *ppn1_ptr};
 
-        let ppn0_entry = ppn1[sections.vpn1.try_into().unwrap()];
-        let ppn0: &mut PageTable = match self.page_check(ppn0_entry) {
+        if !ppn1_entry.has_flag(EntryFlags::VALID) {
+            self.root[sections.vpn2 as usize].set_addr(ppn1_ptr as u64);
+            self.root[sections.vpn2 as usize].add_flag(flags);
+        }
+
+        let ppn0_entry = (ppn1)[sections.vpn1.try_into().unwrap()];
+        let ppn0_ptr: *mut PageTable = match self.page_check(ppn0_entry) {
             None => return Err(MappingError::Megapage),
-            Some(ptr) => unsafe {&mut *ptr}
+            Some(ptr) => ptr
         };
+        let ppn0 = unsafe {&mut *ppn0_ptr};
 
-        let mut entry = unsafe {Entry::from_bits_unchecked(((phys.as_u64() >> 12) << 10).try_into().unwrap())};
+        if !ppn0_entry.has_flag(EntryFlags::VALID) {
+            ppn0[sections.vpn2 as usize].set_addr(ppn0_ptr as u64);
+            ppn0[sections.vpn2 as usize].add_flag(flags);
+        }
+
+
+        let mut entry = Entry::new(0);
+        entry.set_addr(phys.as_u64() >> 12);
         entry.add_flag(flags);
 
         ppn0[sections.vpn0.try_into().unwrap()] = entry;

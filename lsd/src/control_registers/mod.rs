@@ -154,4 +154,12 @@ impl SatpState {
             ppn: ppn.as_u64()
         }
     }
+
+    pub fn bits(&self) -> u64 {
+        let mut res = self.ppn;
+        res += (self.asid as u64) << 44;
+        res += (self.mode.as_usize() as u64) << 60;
+
+        res
+    }
 }

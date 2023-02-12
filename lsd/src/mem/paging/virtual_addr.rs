@@ -37,6 +37,7 @@ impl VirtualAddress {
     }
 }
 
+#[derive(Debug)]
 pub struct VirtSections {
     pub page_offset: u64,
     pub vpn0: u64,

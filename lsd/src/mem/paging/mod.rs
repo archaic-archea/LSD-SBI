@@ -62,9 +62,13 @@ pub fn init() {
 
     //Get range top and bottom for use in mapping
     let range_bot = mem.0 as u64;
-    let range_top = unsafe {mem.0.add(mem.1)} as u64;
+    let range_top = range_bot + 0x10000000;
 
     log::info!("Mapping addresses");
+
+    let virt_base = virtual_addr::VirtualAddress::new(range_bot);
+
+    log::info!("Sections: {:#?}", virt_base.sections());
 
     //Loop through all addresses to map while stepping up by 4096 each loop
     for addr in (range_bot..range_top).step_by(0x1000) {
@@ -81,10 +85,20 @@ pub fn init() {
 
     log::info!("Addresses mapped");
 
-    //enable paging
+    for entry_num in 0..512 {
+        let root = unsafe {&*table_ptr};
+        let entry = root[entry_num];
+
+        match entry.has_flag(entries::EntryFlags::VALID) {
+            true => log::debug!("Found entry: {:#?}", entry),
+            _ => ()
+        }
+    }
+
     use crate::control_registers::{Satp, SatpState};
 
-    log::info!("enabling paging");
+    //enable paging
     let state = SatpState::new(PagingType::Sv39, 0, unsafe {&*table_ptr}.ppn());
+    log::info!("enabling paging with bits 0b{:b}", state.bits());
     Satp::write_state(state);
 }

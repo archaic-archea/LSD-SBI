@@ -1,6 +1,7 @@
 use super::{entries::Entry, physical_addr};
 
-pub struct PageTable([Entry; 512]);
+#[derive(Debug)]
+pub struct PageTable(pub [Entry; 512]);
 
 impl PageTable {
     pub fn ppn(&self) -> physical_addr::Ppn {

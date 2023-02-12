@@ -24,7 +24,7 @@ bitflags::bitflags! {
 impl Entry {
     pub fn new(bits: u64) -> Self {
         unsafe {
-            Self::from_bits_unchecked(bits)
+            Self::from_bits_unchecked(bits & 0x7FFF_FFFF_FFFF_FFFF)
         }
     }
 
@@ -57,6 +57,11 @@ impl Entry {
         let ptr = (addr << 12) as *mut super::pagetable::PageTable;
 
         ptr
+    }
+
+    pub fn set_addr(&mut self, address: u64) {
+        (*self) &= Self::new(!(Self::ADDR_MASK.bits() << 10));
+        (*self) |= Self::new(address);
     }
 }
 
