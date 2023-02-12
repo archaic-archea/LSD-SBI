@@ -15,7 +15,7 @@ pub fn init() {
         log!(Level::Info, "Set vector of handler");
         let sie = control_registers::Sie::all() | control_registers::Sie::read();
         let sstatus = control_registers::Sstatus::read() | control_registers::Sstatus::SIE;
-        log!(Level::Debug, "SIE: {:?}, SSTATUS: {:?}", sie, sstatus);
+        //log!(Level::Debug, "SIE: {:?}, SSTATUS: {:?}", sie, sstatus);
         sie.write();
         sstatus.write();
 

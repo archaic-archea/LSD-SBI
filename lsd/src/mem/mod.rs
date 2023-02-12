@@ -1,6 +1,5 @@
 mod linked_list;
 pub mod paging;
-pub mod addressing;
 
 use linked_list::LinkedListAllocator;
 

@@ -70,12 +70,6 @@ impl Sstatus {
     }
 }
 
-pub struct SatpState {
-    mode: crate::mem::paging::PagingType,
-    asid: u16,
-    ppn: u64
-}
-
 impl Satp {
     pub fn read_mode() -> crate::mem::paging::PagingType {
         let read = Self::read() & !Self::MODE_MASK.bits();
@@ -141,5 +135,23 @@ impl Satp {
         }
 
         state
+    }
+}
+
+pub struct SatpState {
+    mode: crate::mem::paging::PagingType,
+    asid: u16,
+    ppn: u64
+}
+
+use crate::mem::paging::physical_addr::Ppn;
+
+impl SatpState {
+    pub fn new(mode: crate::mem::paging::PagingType, asid: u16, ppn: Ppn) -> Self {
+        Self { 
+            mode,
+            asid,
+            ppn: ppn.as_u64()
+        }
     }
 }

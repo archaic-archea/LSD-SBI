@@ -13,8 +13,6 @@ use core::sync::atomic;
 #[thread_local]
 pub static HART_ID: atomic::AtomicUsize = atomic::AtomicUsize::new(0);
 
-pub static CHAR_BUF: spin::Mutex<[char; 64]> = spin::Mutex::new([0 as char; 64]);
-
 use log::{log, Level};
 
 pub mod io;
@@ -80,4 +78,9 @@ pub trait Compat {
 pub fn current_context() -> usize {
     #[cfg(not(feature = "platform.sifive_u"))]
     return 1 + 2 * crate::HART_ID.load(atomic::Ordering::Relaxed);
+}
+
+pub fn context(id: usize) -> usize {
+    #[cfg(not(feature = "platform.sifive_u"))]
+    return 1 + 2 * id;
 }

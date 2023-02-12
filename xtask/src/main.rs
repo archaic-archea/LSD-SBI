@@ -41,7 +41,7 @@ fn main() -> anyhow::Result<()> {
                     -machine virt
                     -cpu rv64
                     -smp 1
-                    -m 2G
+                    -m 8G
                     -global virtio-mmio.force-legacy=false
                     -object rng-random,filename=/dev/urandom,id=rng0 
                     -device virtio-rng-device,rng=rng0 

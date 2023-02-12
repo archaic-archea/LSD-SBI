@@ -19,6 +19,9 @@ extern "C" fn kmain(hartid: usize, devicetree_ptr: *const u8) -> ! {
     interrupts::init();
     HART_ID.store(hartid, core::sync::atomic::Ordering::Relaxed);
     plic::init(devicetree_ptr, current_context()..current_context() + 1);
+    mem::paging::init();
+
+    log::info!("Pagining initialized");
 
     let fdt: fdt::Fdt;
     unsafe {
@@ -42,25 +45,6 @@ extern "C" fn kmain(hartid: usize, devicetree_ptr: *const u8) -> ! {
     let mut paging_type = mem::paging::PagingType::Sv39;
 
     for node in fdt.all_nodes() {
-        /*if node.name.contains("virtio_mmio") {
-            match node.reg() {
-                Some(region_iter) => {
-                    for reg in region_iter {
-                        log::info!("Found region");
-                        let header = unsafe {
-                            let ptr = reg.starting_address;
-
-                            &*(ptr as *const virtio::VirtIoHeader)
-                        };
-
-                        log::info!("virtio valid: {:?}", header.valid_magic());
-                        log::info!("virtio type: {:?}", header.device_type());
-                    }
-                },
-                None => ()
-            }
-        }*/
-
         if node.name.contains("cpu@") {
             log::info!("Node: {} {{", node.name);
             for prop in node.properties() {
@@ -76,24 +60,19 @@ extern "C" fn kmain(hartid: usize, devicetree_ptr: *const u8) -> ! {
         }
     }
 
-    log::info!("Paging type: {:?}", paging_type);
+    log::info!("Paging type: {:?}\n", paging_type);
 
     let memmap_free = unsafe {mem::MEMMAP.free};
     let free_limit = unsafe {memmap_free.0.add(memmap_free.1)};
     log::info!("Free base:   {:#?}", memmap_free.0);
-    log::info!("Free limit:  {:#?}\n", free_limit);
+    log::info!("Free limit:  {:#?}", free_limit);
+    log::info!("Free length: 0x{:x}\n", memmap_free.1);
 
     let mem = unsafe {mem::MEMMAP.mem};
     let limit = unsafe {mem.0.add(mem.1)};
     log::info!("Mem base:    {:#?}", mem.0);
-    log::info!("Mem length:  {:#?}", limit);
-    log::info!("Mem limit:   {:#?}", mem.1);
-
-    unsafe {
-        *free_limit = 0;
-        *free_limit.add(1) = 0;
-        *limit.cast_mut().sub(1) = 0;
-    }
+    log::info!("Mem limit:   {:#?}", limit);
+    log::info!("Mem length:  0x{:x}", mem.1);
 
     hcf();
 }
