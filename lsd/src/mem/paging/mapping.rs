@@ -51,8 +51,8 @@ impl Mapper {
         let ppn0 = unsafe {&mut *ppn0_ptr};
 
         if !ppn0_entry.has_flag(EntryFlags::VALID) {
-            ppn0[sections.vpn2 as usize].set_addr(ppn0_ptr as u64);
-            ppn0[sections.vpn2 as usize].add_flag(flags);
+            ppn1[sections.vpn1 as usize].set_addr(ppn0_ptr as u64);
+            ppn1[sections.vpn1 as usize].add_flag(flags);
         }
 
 

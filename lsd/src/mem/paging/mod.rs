@@ -66,9 +66,9 @@ pub fn init() {
 
     log::info!("Mapping addresses");
 
-    let virt_base = virtual_addr::VirtualAddress::new(range_bot);
+    //let virt_base = virtual_addr::VirtualAddress::new(range_bot);
 
-    log::info!("Sections: {:#?}", virt_base.sections());
+    //log::info!("Sections: {:#?}", virt_base.sections());
 
     //Loop through all addresses to map while stepping up by 4096 each loop
     for addr in (range_bot..range_top).step_by(0x1000) {
@@ -90,7 +90,9 @@ pub fn init() {
         let entry = root[entry_num];
 
         match entry.has_flag(entries::EntryFlags::VALID) {
-            true => log::debug!("Found entry: {:#?}", entry),
+            true => {
+                log::debug!("Found entry at index {}: {:#?}", entry_num, entry);
+            },
             _ => ()
         }
     }
