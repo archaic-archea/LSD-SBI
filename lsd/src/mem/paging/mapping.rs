@@ -8,7 +8,7 @@ use super::entries::{EntryFlags, Entry};
 
 pub struct Mapper {
     root: &'static mut PageTable,
-    alloc: PageTableAlloc,
+    pub alloc: PageTableAlloc,
     paging_type: super::PagingType
 }
 

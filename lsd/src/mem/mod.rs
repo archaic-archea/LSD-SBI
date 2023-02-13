@@ -10,7 +10,7 @@ static ALLOCATOR: Locked<LinkedListAllocator> = Locked::new(LinkedListAllocator:
 #[no_mangle]
 pub static mut MEMMAP: Memmap = Memmap::null();
 
-pub static mut PAGING_TYPE: paging::PagingType = paging::PagingType::Bare;
+pub static mut PAGING_TYPE: paging::PagingType = paging::PagingType::Sv39;
 
 pub fn init(devicetree_ptr: *const u8) {
     memory_map(devicetree_ptr);
@@ -21,6 +21,8 @@ pub fn init(devicetree_ptr: *const u8) {
 
     let free = unsafe {MEMMAP.free.length()} / 1048576;
     log::info!("Free memory: {}MiB", free);
+
+    paging::init();
 }
 
 pub fn memory_map(devicetree_ptr: *const u8) {
@@ -119,6 +121,32 @@ impl ConstMemRange {
 
         base..max
     }
+
+    pub fn size_set(&self) -> paging::PageSizeSet {
+        use paging::PageSize;
+
+        let size = self.length;
+        let mut remaining_size: usize;
+
+        let large_pages = size / PageSize::Large as usize;
+        remaining_size = size % PageSize::Large as usize;
+
+        let medium_pages = remaining_size / PageSize::Medium as usize;
+        remaining_size = size % PageSize::Medium as usize;
+
+        let mut small_pages = remaining_size / PageSize::Small as usize;
+        remaining_size = size % PageSize::Small as usize;
+
+        if remaining_size > 0 {
+            small_pages += 1;
+        }
+
+        paging::PageSizeSet {
+            large: large_pages,
+            medium: medium_pages,
+            small: small_pages
+        }
+    }
 }
 
 pub struct MutMemRange {
@@ -151,7 +179,34 @@ impl MutMemRange {
 
         base..max
     }
+
+    pub fn size_set(&self) -> paging::PageSizeSet {
+        use paging::PageSize;
+
+        let size = self.length;
+        let mut remaining_size: usize;
+
+        let large_pages = size / PageSize::Large as usize;
+        remaining_size = size % PageSize::Large as usize;
+
+        let medium_pages = remaining_size / PageSize::Medium as usize;
+        remaining_size = size % PageSize::Medium as usize;
+
+        let mut small_pages = remaining_size / PageSize::Small as usize;
+        remaining_size = size % PageSize::Small as usize;
+
+        if remaining_size > 0 {
+            small_pages += 1;
+        }
+
+        paging::PageSizeSet {
+            large: large_pages,
+            medium: medium_pages,
+            small: small_pages
+        }
+    }
 }
+
 
 pub struct Memmap {
     pub mem: ConstMemRange,

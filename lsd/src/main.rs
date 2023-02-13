@@ -19,7 +19,6 @@ extern "C" fn kmain(hartid: usize, devicetree_ptr: *const u8) -> ! {
     interrupts::init();
     HART_ID.store(hartid, core::sync::atomic::Ordering::Relaxed);
     plic::init(devicetree_ptr, current_context()..current_context() + 1);
-    mem::paging::init();
 
     log::info!("Pagining initialized");
 

@@ -9,6 +9,7 @@ const PAGE_SIZE: usize = 4096;
 pub fn init() {
     //Get memory range, and free memory range
     let mem = unsafe {&crate::mem::MEMMAP.mem};
+    let kern = unsafe {&crate::mem::MEMMAP.kernel};
     let free = unsafe {&crate::mem::MEMMAP.free};
 
     //Create a new allocator for page tables
@@ -24,7 +25,22 @@ pub fn init() {
     log::info!("Mapping addresses");
 
     //Loop through all addresses to map while stepping up by 4096 each loop
-    for addr in mem.range().step_by(0x1000) {
+    for addr in mem.range().step_by(PageSize::Small as usize) {
+        let phys = physical_addr::PhyscialAddress::new(addr);
+        let virt = virtual_addr::VirtualAddress::new(addr);
+
+        //make the PTE accessed, dirty, executable, readable, writable, and valid
+        use entries::EntryFlags;
+        let flags = EntryFlags::ACCESSED | EntryFlags::DIRTY | EntryFlags::READ | EntryFlags::WRITE | EntryFlags::VALID;
+
+        //log::debug!("Mapping mem: {:?} to {:?}", phys, virt);
+        mapper.recursive_map(phys, virt, flags, PageSize::Small).expect("Failed to map address");
+    }
+    log::info!("Addresses mapped");
+
+    log::info!("Mapping kernel");
+    //Loop through all addresses to map while stepping up by 4096 each loop
+    for addr in kern.range().step_by(PageSize::Medium as usize) {
         let phys = physical_addr::PhyscialAddress::new(addr);
         let virt = virtual_addr::VirtualAddress::new(addr);
 
@@ -33,10 +49,9 @@ pub fn init() {
         let flags = EntryFlags::ACCESSED | EntryFlags::DIRTY | EntryFlags::EXECUTE | EntryFlags::READ | EntryFlags::WRITE | EntryFlags::VALID;
 
         //log::debug!("Mapping mem: {:?} to {:?}", phys, virt);
-        mapper.recursive_map(phys, virt, flags, PageSize::Small).expect("Failed to map address");
+        mapper.recursive_map(phys, virt, flags, PageSize::Medium).expect("Failed to map address");
     }
-
-    log::info!("Addresses mapped");
+    log::info!("Kernel mapped");
 
     log::info!("Mapping IO");
     let range_bot = 0;
@@ -63,6 +78,7 @@ pub fn init() {
     log::info!("Enabling paging");
     Satp::write_state(state);
     log::info!("Paging enabled");
+    log::info!("Pagetables used: {}", mapper.alloc.page_offset);
 }
 
 pub struct Page([u8; PAGE_SIZE]);
@@ -79,6 +95,12 @@ pub enum PageSize {
     Small = 0x1000,
     Medium = 0x20_0000,
     Large = 0x4000_0000
+}
+
+pub struct PageSizeSet {
+    pub large: usize,
+    pub medium: usize,
+    pub small: usize
 }
 
 impl PagingType {

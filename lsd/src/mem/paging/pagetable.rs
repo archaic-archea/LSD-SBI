@@ -27,7 +27,7 @@ impl core::ops::IndexMut<usize> for PageTable {
 
 pub struct PageTableAlloc {
     base: *mut PageTable,
-    page_offset: usize
+    pub page_offset: usize
 }
 
 impl PageTableAlloc {
