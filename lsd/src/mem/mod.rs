@@ -13,7 +13,7 @@ pub static mut MEMMAP: Memmap = Memmap::null();
 pub fn init(devicetree_ptr: *const u8) {
     memory_map(devicetree_ptr);
     unsafe {
-        let heap_data = MEMMAP.heap;
+        let heap_data = &MEMMAP.heap;
         ALLOCATOR.lock().init(heap_data.base() as usize, heap_data.length());
     }
 
@@ -93,7 +93,7 @@ pub struct ConstMemRange {
 }
 
 impl ConstMemRange {
-    pub fn new(base: *const u8, length: usize) -> Self {
+    pub const fn new(base: *const u8, length: usize) -> Self {
         Self { base, length }
     }
 
@@ -125,7 +125,7 @@ pub struct MutMemRange {
 }
 
 impl MutMemRange {
-    pub fn new(base: *mut u8, length: usize) -> Self {
+    pub const fn new(base: *mut u8, length: usize) -> Self {
         Self { base, length }
     }
 

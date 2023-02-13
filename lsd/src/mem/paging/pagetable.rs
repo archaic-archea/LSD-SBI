@@ -55,4 +55,8 @@ impl PageTableAlloc {
     pub fn dealloc(&self) {
         panic!("Dealloc shouldnt be called on permanent page tables")
     }
+
+    pub fn current_addr(&self) -> *mut u8 {
+        unsafe {self.base.add(self.page_offset) as *mut u8}
+    }
 }

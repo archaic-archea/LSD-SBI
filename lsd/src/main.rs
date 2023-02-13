@@ -62,17 +62,17 @@ extern "C" fn kmain(hartid: usize, devicetree_ptr: *const u8) -> ! {
 
     log::info!("Paging type: {:?}\n", paging_type);
 
-    let memmap_free = unsafe {mem::MEMMAP.free};
-    let free_limit = unsafe {memmap_free.0.add(memmap_free.1)};
-    log::info!("Free base:   {:#?}", memmap_free.0);
+    let memmap_free = unsafe {&mem::MEMMAP.free};
+    let free_limit = memmap_free.max();
+    log::info!("Free base:   {:#?}", memmap_free.base());
     log::info!("Free limit:  {:#?}", free_limit);
-    log::info!("Free length: 0x{:x}\n", memmap_free.1);
+    log::info!("Free length: 0x{:x}\n", memmap_free.length());
 
-    let mem = unsafe {mem::MEMMAP.mem};
-    let limit = unsafe {mem.0.add(mem.1)};
-    log::info!("Mem base:    {:#?}", mem.0);
+    let mem = unsafe {&mem::MEMMAP.mem};
+    let limit = mem.max();
+    log::info!("Mem base:    {:#?}", mem.base());
     log::info!("Mem limit:   {:#?}", limit);
-    log::info!("Mem length:  0x{:x}", mem.1);
+    log::info!("Mem length:  0x{:x}", mem.length());
 
     hcf();
 }

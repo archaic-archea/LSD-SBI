@@ -47,8 +47,8 @@ impl PagingType {
 
 pub fn init() {
     //Get memory range, and free memory range
-    let mem = unsafe {crate::mem::MEMMAP.mem};
-    let free = unsafe {crate::mem::MEMMAP.free};
+    let mem = unsafe {&crate::mem::MEMMAP.mem};
+    let free = unsafe {&crate::mem::MEMMAP.free};
 
     //Create a new allocator for page tables
     let mut allocator = pagetable::PageTableAlloc::new(free.base());
@@ -59,10 +59,6 @@ pub fn init() {
 
     //Create mapper for mapping memory
     let mut mapper = mapping::Mapper::new(root_table, allocator, PagingType::Sv39);
-
-    //Get range top and bottom for use in mapping
-    let range_bot = mem.base() as u64;
-    let range_top = mem.max() as u64;
 
     log::info!("Mapping addresses");
 
