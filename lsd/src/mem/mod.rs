@@ -110,6 +110,13 @@ impl ConstMemRange {
             self.base.add(self.length)
         }
     }
+
+    pub fn range(&self) -> core::ops::Range<u64> {
+        let base = self.base() as u64;
+        let max = self.max() as u64;
+
+        base..max
+    }
 }
 
 pub struct MutMemRange {
@@ -134,6 +141,13 @@ impl MutMemRange {
         unsafe {
             self.base.add(self.length)
         }
+    }
+
+    pub fn range(&self) -> core::ops::Range<u64> {
+        let base = self.base() as u64;
+        let max = self.max() as u64;
+
+        base..max
     }
 }
 

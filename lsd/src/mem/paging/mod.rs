@@ -67,7 +67,7 @@ pub fn init() {
     log::info!("Mapping addresses");
 
     //Loop through all addresses to map while stepping up by 4096 each loop
-    for addr in (range_bot..range_top).step_by(0x1000) {
+    for addr in mem.range().step_by(0x1000) {
         let phys = physical_addr::PhyscialAddress::new(addr);
         let virt = virtual_addr::VirtualAddress::new(addr);
 
