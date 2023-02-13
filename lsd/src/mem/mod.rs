@@ -10,6 +10,8 @@ static ALLOCATOR: Locked<LinkedListAllocator> = Locked::new(LinkedListAllocator:
 #[no_mangle]
 pub static mut MEMMAP: Memmap = Memmap::null();
 
+pub static mut PAGING_TYPE: paging::PagingType = paging::PagingType::Bare;
+
 pub fn init(devicetree_ptr: *const u8) {
     memory_map(devicetree_ptr);
     unsafe {

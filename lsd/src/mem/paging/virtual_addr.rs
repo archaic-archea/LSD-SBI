@@ -59,3 +59,18 @@ impl VirtSections {
         VirtualAddress(address)
     }
 }
+
+impl core::ops::Index<usize> for VirtSections {
+    type Output = u64;
+
+    fn index(&self, idx: usize) -> &u64 {
+        match idx {
+            0 => &self.vpn4,
+            1 => &self.vpn3,
+            2 => &self.vpn2,
+            3 => &self.vpn1,
+            4 => &self.vpn0,
+            _ => &self.page_offset
+        }
+    }
+}
