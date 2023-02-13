@@ -19,7 +19,7 @@ pub fn init() {
     let root_table = unsafe {&mut *table_ptr};
 
     //Create mapper for mapping memory
-    let mut mapper = mapping::Mapper::new(root_table, allocator, PagingType::Sv48);
+    let mut mapper = mapping::Mapper::new(root_table, allocator, unsafe {super::PAGING_TYPE});
 
     log::info!("Mapping addresses");
 
