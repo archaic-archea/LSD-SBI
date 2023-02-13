@@ -51,24 +51,20 @@ pub fn init() {
     let free = unsafe {crate::mem::MEMMAP.free};
 
     //Create a new allocator for page tables
-    let mut allocator = pagetable::PageTableAlloc::new(free.0);
+    let mut allocator = pagetable::PageTableAlloc::new(free.base());
 
     //Create root page table
     let table_ptr = allocator.alloc();
     let root_table = unsafe {&mut *table_ptr};
 
     //Create mapper for mapping memory
-    let mut mapper = mapping::Mapper::new(root_table, allocator);
+    let mut mapper = mapping::Mapper::new(root_table, allocator, PagingType::Sv39);
 
     //Get range top and bottom for use in mapping
-    let range_bot = mem.0 as u64;
-    let range_top = range_bot + 0x10000000;
+    let range_bot = mem.base() as u64;
+    let range_top = mem.max() as u64;
 
     log::info!("Mapping addresses");
-
-    //let virt_base = virtual_addr::VirtualAddress::new(range_bot);
-
-    //log::info!("Sections: {:#?}", virt_base.sections());
 
     //Loop through all addresses to map while stepping up by 4096 each loop
     for addr in (range_bot..range_top).step_by(0x1000) {
@@ -85,22 +81,28 @@ pub fn init() {
 
     log::info!("Addresses mapped");
 
-    for entry_num in 0..512 {
-        let root = unsafe {&*table_ptr};
-        let entry = root[entry_num];
+    let range_bot = 0;
+    let range_top = 0x8000_0000;
+    //Map IO
+    for addr in (range_bot..range_top).step_by(0x1000) {
+        let phys = physical_addr::PhyscialAddress::new(addr);
+        let virt = virtual_addr::VirtualAddress::new(addr);
 
-        match entry.has_flag(entries::EntryFlags::VALID) {
-            true => {
-                log::debug!("Found entry at index {}: {:#?}", entry_num, entry);
-            },
-            _ => ()
-        }
+        //make the PTE accessed, dirty, readable, writable, and valid
+        use entries::EntryFlags;
+        let flags = EntryFlags::ACCESSED | EntryFlags::DIRTY | EntryFlags::READ | EntryFlags::WRITE | EntryFlags::VALID;
+
+        //log::debug!("Mapping {:?} to {:?}", phys, virt);
+        mapper.map(phys, virt, flags).expect("Failed to map address");
     }
+
+    log::info!("UART mapped");
 
     use crate::control_registers::{Satp, SatpState};
 
     //enable paging
     let state = SatpState::new(PagingType::Sv39, 0, unsafe {&*table_ptr}.ppn());
-    log::info!("enabling paging with bits 0b{:b}", state.bits());
+    log::info!("Enabling paging");
     Satp::write_state(state);
+    log::info!("Paging enabled");
 }

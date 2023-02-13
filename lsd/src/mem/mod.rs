@@ -14,35 +14,11 @@ pub fn init(devicetree_ptr: *const u8) {
     memory_map(devicetree_ptr);
     unsafe {
         let heap_data = MEMMAP.heap;
-        ALLOCATOR.lock().init(heap_data.0 as usize, heap_data.1);
+        ALLOCATOR.lock().init(heap_data.base() as usize, heap_data.length());
     }
 
-    let free = unsafe {MEMMAP.free.1} / 1048576;
+    let free = unsafe {MEMMAP.free.length()} / 1048576;
     log::info!("Free memory: {}MiB", free);
-}
-
-pub struct Memmap {
-    pub mem: (*const u8, usize),
-    _unknown: (*const u8, usize), //not sure whats here 
-    kernel: (*const u8, usize),
-    pub heap: (*mut u8, usize),
-    pub stack: (*mut u8, usize),
-    pub interrupt_stack: (*mut u8, usize),
-    pub free: (*mut u8, usize),
-}
-
-impl Memmap {
-    pub const fn null() -> Self {
-        Memmap { 
-            mem: (core::ptr::null(), 0), 
-            _unknown: (core::ptr::null(), 0), 
-            kernel: (core::ptr::null(), 0),
-            heap: (core::ptr::null_mut(), 0),
-            stack: (core::ptr::null_mut(), 0),
-            interrupt_stack: (core::ptr::null_mut(), 0),
-            free: (core::ptr::null_mut(), 0),
-        }
-    }
 }
 
 pub fn memory_map(devicetree_ptr: *const u8) {
@@ -79,13 +55,13 @@ pub fn memory_map(devicetree_ptr: *const u8) {
     let free_len = mem_len - (kernel_len + unknown_len + heap_len + stack_len + int_stack_len);
 
     let memmap = unsafe {&mut MEMMAP};
-    memmap.mem = (mem_base, mem_len);
-    memmap._unknown = (unknown_base, unknown_len);
-    memmap.kernel = (kernel_base, kernel_len);
-    memmap.heap = (heap_base, heap_len);
-    memmap.stack = (stack_base, stack_len);
-    memmap.interrupt_stack = (int_stack_base, int_stack_len);
-    memmap.free = (free_base, free_len);
+    memmap.mem = ConstMemRange::new(mem_base, mem_len);
+    memmap._unknown = ConstMemRange::new(unknown_base, unknown_len);
+    memmap.kernel = ConstMemRange::new(kernel_base, kernel_len);
+    memmap.heap = MutMemRange::new(heap_base, heap_len);
+    memmap.stack = MutMemRange::new(stack_base, stack_len);
+    memmap.interrupt_stack = MutMemRange::new(int_stack_base, int_stack_len);
+    memmap.free = MutMemRange::new(free_base, free_len);
 }
 
 unsafe impl Sync for Memmap {}
@@ -109,4 +85,78 @@ impl<A> Locked<A> {
 
 fn align_up(addr: usize, align: usize) -> usize {
     (addr + align - 1) & !(align - 1)
+}
+
+pub struct ConstMemRange {
+    base: *const u8,
+    length: usize
+}
+
+impl ConstMemRange {
+    pub fn new(base: *const u8, length: usize) -> Self {
+        Self { base, length }
+    }
+
+    pub fn base(&self) -> *const u8 {
+        self.base
+    }
+
+    pub fn length(&self) -> usize {
+        self.length
+    }
+
+    pub fn max(&self) -> *const u8 {
+        unsafe {
+            self.base.add(self.length)
+        }
+    }
+}
+
+pub struct MutMemRange {
+    base: *mut u8,
+    length: usize
+}
+
+impl MutMemRange {
+    pub fn new(base: *mut u8, length: usize) -> Self {
+        Self { base, length }
+    }
+
+    pub fn base(&self) -> *mut u8 {
+        self.base
+    }
+
+    pub fn length(&self) -> usize {
+        self.length
+    }
+
+    pub fn max(&self) -> *mut u8 {
+        unsafe {
+            self.base.add(self.length)
+        }
+    }
+}
+
+pub struct Memmap {
+    pub mem: ConstMemRange,
+    _unknown: ConstMemRange, //not sure whats here 
+    kernel: ConstMemRange,
+    pub heap: MutMemRange,
+    pub stack: MutMemRange,
+    pub interrupt_stack: MutMemRange,
+    pub free: MutMemRange,
+}
+
+impl Memmap {
+    pub const fn null() -> Self {
+        Memmap { 
+            mem: ConstMemRange::new(core::ptr::null(), 0), 
+            _unknown: ConstMemRange::new(core::ptr::null(), 0), 
+            kernel: ConstMemRange::new(core::ptr::null(), 0),
+            heap: MutMemRange::new(core::ptr::null_mut(), 0),
+            stack: MutMemRange::new(core::ptr::null_mut(), 0),
+            interrupt_stack: MutMemRange::new(core::ptr::null_mut(), 0),
+            free: MutMemRange::new(core::ptr::null_mut(), 0),
+        }
+    }
 }

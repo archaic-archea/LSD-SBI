@@ -61,7 +61,7 @@ impl Entry {
 
     pub fn set_addr(&mut self, address: u64) {
         (*self) &= Self::new(!(Self::ADDR_MASK.bits() << 10));
-        (*self) |= Self::new(address);
+        (*self) |= Self::new((address >> 12) << 10);
     }
 }
 

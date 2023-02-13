@@ -7,14 +7,16 @@ use super::entries::{EntryFlags, Entry};
 
 pub struct Mapper {
     root: &'static mut PageTable,
-    alloc: PageTableAlloc
+    alloc: PageTableAlloc,
+    paging_type: super::PagingType
 }
 
 impl Mapper {
-    pub fn new(root: &'static mut PageTable, alloc: PageTableAlloc) -> Self {
+    pub fn new(root: &'static mut PageTable, alloc: PageTableAlloc, paging_type: super::PagingType) -> Self {
         Self {
             root,
-            alloc
+            alloc,
+            paging_type
         }
     }
 
@@ -40,8 +42,9 @@ impl Mapper {
 
         if !ppn1_entry.has_flag(EntryFlags::VALID) {
             self.root[sections.vpn2 as usize].set_addr(ppn1_ptr as u64);
-            self.root[sections.vpn2 as usize].add_flag(flags);
+            self.root[sections.vpn2 as usize].add_flag(EntryFlags::VALID);
         }
+
 
         let ppn0_entry = (ppn1)[sections.vpn1.try_into().unwrap()];
         let ppn0_ptr: *mut PageTable = match self.page_check(ppn0_entry) {
@@ -52,12 +55,12 @@ impl Mapper {
 
         if !ppn0_entry.has_flag(EntryFlags::VALID) {
             ppn1[sections.vpn1 as usize].set_addr(ppn0_ptr as u64);
-            ppn1[sections.vpn1 as usize].add_flag(flags);
+            ppn1[sections.vpn1 as usize].add_flag(EntryFlags::VALID);
         }
 
-
+        
         let mut entry = Entry::new(0);
-        entry.set_addr(phys.as_u64() >> 12);
+        entry.set_addr(phys.as_u64());
         entry.add_flag(flags);
 
         ppn0[sections.vpn0.try_into().unwrap()] = entry;
