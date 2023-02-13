@@ -19,7 +19,7 @@ pub fn init() {
     let root_table = unsafe {&mut *table_ptr};
 
     //Create mapper for mapping memory
-    let mut mapper = mapping::Mapper::new(root_table, allocator, PagingType::Sv39);
+    let mut mapper = mapping::Mapper::new(root_table, allocator, PagingType::Sv48);
 
     log::info!("Mapping addresses");
 
@@ -32,7 +32,7 @@ pub fn init() {
         use entries::EntryFlags;
         let flags = EntryFlags::ACCESSED | EntryFlags::DIRTY | EntryFlags::EXECUTE | EntryFlags::READ | EntryFlags::WRITE | EntryFlags::VALID;
 
-        //log::debug!("Mapping {:?} to {:?}", phys, virt);
+        //log::debug!("Mapping mem: {:?} to {:?}", phys, virt);
         mapper.recursive_map(phys, virt, flags, PageSize::Small).expect("Failed to map address");
     }
 
@@ -42,7 +42,7 @@ pub fn init() {
     let range_bot = 0;
     let range_top = 0x8000_0000;
     //Map IO
-    for addr in (range_bot..range_top).step_by(PageSize::Large as usize) {
+    for addr in (range_bot..range_top).step_by(PageSize::Medium as usize) {
         let phys = physical_addr::PhyscialAddress::new(addr);
         let virt = virtual_addr::VirtualAddress::new(addr);
 
@@ -50,8 +50,8 @@ pub fn init() {
         use entries::EntryFlags;
         let flags = EntryFlags::ACCESSED | EntryFlags::DIRTY | EntryFlags::READ | EntryFlags::WRITE | EntryFlags::VALID;
 
-        //log::debug!("Mapping {:?} to {:?}", phys, virt);
-        mapper.recursive_map(phys, virt, flags, PageSize::Large).expect("Failed to map address");
+        //log::debug!("Mapping IO: {:?} to {:?}", phys, virt);
+        mapper.recursive_map(phys, virt, flags, PageSize::Medium).expect("Failed to map address");
     }
 
     log::info!("IO mapped");

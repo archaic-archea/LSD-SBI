@@ -38,6 +38,7 @@ impl PhyscialAddress {
 }
 
 #[allow(dead_code)]
+#[derive(Debug)]
 pub struct PhysSections {
     page_offset: u64,
     ppn0: u64,

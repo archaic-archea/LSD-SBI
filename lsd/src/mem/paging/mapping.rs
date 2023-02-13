@@ -118,7 +118,7 @@ impl Mapper {
         entry.set_addr(phys.as_u64());
         entry.add_flag(flags);
 
-        unsafe {(*src_table)[sections.vpn0.try_into().unwrap()] = entry};
+        unsafe {(*src_table)[sections[hi_depth] as usize] = entry};
 
         Ok(())
     }
