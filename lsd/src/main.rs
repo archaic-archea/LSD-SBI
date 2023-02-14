@@ -41,38 +41,23 @@ extern "C" fn kmain(hartid: usize, devicetree_ptr: *const u8) -> ! {
     plic_ref.set_interrupt_priority(uart_int, 7);
     plic_ref.enable_interrupt(current_context(), uart_int);
 
-    let mut paging_type = mem::paging::PagingType::Sv39;
-
     for node in fdt.all_nodes() {
-        if node.name.contains("cpu@") {
-            log::info!("Node: {} {{", node.name);
-            for prop in node.properties() {
-                log::info!("    Cpu property: {}", prop.name);
-                log::info!("        {}: {:?}", prop.name, prop.as_str());
-            }
-            log::info!("}}");
+        match node.name.contains("virtio") {
+            true =>{
+                use drivers::virtio::{DeviceType, VirtIoHeader};
+                let base = node.reg().unwrap().next().unwrap().starting_address.cast_mut() as *mut VirtIoHeader;
+                
+                unsafe {
+                    let virtio_header = &*base;
 
-            let mmu_type = node.property("mmu-type").expect("No MMu type");
-            paging_type = mem::paging::PagingType::from_str(mmu_type.as_str().unwrap()).expect("Invalid MMU type");
-        } else {
-            log::info!("Node: {}", node.name);
+                    let dev_type = DeviceType::from_u32(virtio_header.device_id.read()).expect("Invalid device");
+
+                    log::info!("Virtio device found: {:?}", dev_type);
+                }
+            },
+            _ => ()
         }
     }
-
-    log::info!("Paging type: {:?}\n", paging_type);
-
-    let memmap_free = unsafe {&mem::MEMMAP.free};
-    let free_limit = memmap_free.max();
-    log::info!("Free base:   {:#?}", memmap_free.base());
-    log::info!("Free limit:  {:#?}", free_limit);
-    log::info!("Free length: 0x{:x}\n", memmap_free.length());
-
-    let mem = unsafe {&mem::MEMMAP.mem};
-    let limit = mem.max();
-    log::info!("Mem base:    {:#?}", mem.base());
-    log::info!("Mem limit:   {:#?}", limit);
-    log::info!("Mem length:  0x{:x}", mem.length());
-
     hcf();
 }
 
