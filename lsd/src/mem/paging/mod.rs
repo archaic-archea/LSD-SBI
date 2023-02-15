@@ -7,10 +7,13 @@ pub mod entries;
 const PAGE_SIZE: usize = 4096;
 
 pub fn init() {
+    use crate::mem;
+
     //Get memory range, and free memory range
-    let mem = unsafe {&crate::mem::MEMMAP.mem};
-    let kern = unsafe {&crate::mem::MEMMAP.kernel};
-    let free = unsafe {&crate::mem::MEMMAP.free};
+    let mem = mem::MEM_VEC.lock().find_id("mem").unwrap().data;
+    let kern = mem::MEM_VEC.lock().find_id("kernel").unwrap().data;
+    let int_stack = mem::MEM_VEC.lock().find_id("int_stack0").unwrap().data;
+    let free = mem::MEM_VEC.lock().find_id("free").unwrap().data;
 
     //Create a new allocator for page tables
     let mut allocator = pagetable::PageTableAlloc::new(free.base());
@@ -24,8 +27,13 @@ pub fn init() {
 
     log::info!("Mapping addresses");
 
-    //Loop through all addresses to map while stepping up by 4096 each loop
-    for addr in mem.range().step_by(PageSize::Small as usize) {
+    let mem_range_base = mem.base() as u64;
+    let mem_range_top = int_stack.base() as u64;
+
+    let mem_range = mem_range_base..mem_range_top;
+
+    //Loop through all non-free memory addresses to map while stepping up by 4096 each loop
+    for addr in mem_range.step_by(PageSize::Small as usize) {
         let phys = physical_addr::PhyscialAddress::new(addr);
         let virt = virtual_addr::VirtualAddress::new(addr);
 
@@ -40,7 +48,7 @@ pub fn init() {
 
     log::info!("Mapping kernel");
     //Loop through all addresses to map while stepping up by 4096 each loop
-    for addr in kern.range().step_by(PageSize::Medium as usize) {
+    for addr in kern.range().step_by(PageSize::Small as usize) {
         let phys = physical_addr::PhyscialAddress::new(addr);
         let virt = virtual_addr::VirtualAddress::new(addr);
 
@@ -49,7 +57,7 @@ pub fn init() {
         let flags = EntryFlags::ACCESSED | EntryFlags::DIRTY | EntryFlags::EXECUTE | EntryFlags::READ | EntryFlags::WRITE | EntryFlags::VALID;
 
         //log::debug!("Mapping mem: {:?} to {:?}", phys, virt);
-        mapper.recursive_map(phys, virt, flags, PageSize::Medium).expect("Failed to map address");
+        mapper.recursive_map(phys, virt, flags, PageSize::Small).expect("Failed to map address");
     }
     log::info!("Kernel mapped");
 
@@ -57,7 +65,7 @@ pub fn init() {
     let range_bot = 0;
     let range_top = 0x8000_0000;
     //Map IO
-    for addr in (range_bot..range_top).step_by(PageSize::Medium as usize) {
+    for addr in (range_bot..range_top).step_by(PageSize::Large as usize) {
         let phys = physical_addr::PhyscialAddress::new(addr);
         let virt = virtual_addr::VirtualAddress::new(addr);
 
@@ -66,7 +74,7 @@ pub fn init() {
         let flags = EntryFlags::ACCESSED | EntryFlags::DIRTY | EntryFlags::READ | EntryFlags::WRITE | EntryFlags::VALID;
 
         //log::debug!("Mapping IO: {:?} to {:?}", phys, virt);
-        mapper.recursive_map(phys, virt, flags, PageSize::Medium).expect("Failed to map address");
+        mapper.recursive_map(phys, virt, flags, PageSize::Large).expect("Failed to map address");
     }
 
     log::info!("IO mapped");
