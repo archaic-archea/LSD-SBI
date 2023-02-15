@@ -238,9 +238,12 @@ use mem::IDedMemRange;
 
 impl LLVec<IDedMemRange> {
     pub fn find_id(&self, id: &str) -> Option<&LLVecEntry<IDedMemRange>> {
-        for entry_num in 0..self.length - 1 {
+        for entry_num in 0..self.length {
             if self[entry_num].read().id() == id {
+                log::debug!("{:?} == {:?}", self[entry_num].read().id(), id);
                 return Some(&self[entry_num]);
+            } else {
+                log::debug!("{:?} != {:?}", self[entry_num].read().id(), id);
             }
         }
 

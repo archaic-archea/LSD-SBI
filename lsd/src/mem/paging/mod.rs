@@ -13,7 +13,7 @@ pub fn init() {
     let mem = mem::MEM_VEC.lock().find_id("mem").unwrap().data;
     let kern = mem::MEM_VEC.lock().find_id("kernel").unwrap().data;
     let int_stack = mem::MEM_VEC.lock().find_id("int_stack0").unwrap().data;
-    let free = mem::MEM_VEC.lock().find_id("free").unwrap().data;
+    let free = mem::MEM_VEC.lock().find_id("free0").unwrap().data;
 
     //Create a new allocator for page tables
     let mut allocator = pagetable::PageTableAlloc::new(free.base());

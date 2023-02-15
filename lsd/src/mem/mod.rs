@@ -18,45 +18,8 @@ pub static mut PAGING_TYPE: paging::PagingType = paging::PagingType::Sv39;
 pub fn init(devicetree_ptr: *const u8) {
     memory_map(devicetree_ptr);
 
-    let free = MEM_VEC.lock().find_id("free").expect("No free memory").data.range.length();
+    let free = MEM_VEC.lock().find_id("free0").expect("No free memory").data.range.length();
     log::info!("Free memory: {}MiB", free);
-
-
-    let new_range = MutMemRange::new(core::ptr::null_mut(), 0);
-    let new_id = IDedMemRange::new("null range", new_range);
-
-    MEM_VEC.lock().initialize(new_id);
-
-    log::info!("MEM_VEC initialized: {:#?}", MEM_VEC.lock()[0]);
-
-    let new_range = MutMemRange::new(core::ptr::null_mut(), 1);
-    let new_id = IDedMemRange::new("one range", new_range);
-
-    MEM_VEC.lock().push(new_id);
-
-    log::info!("MEM_VEC pushed: {:#?}", MEM_VEC.lock()[1]);
-
-    let new_range = MutMemRange::new(core::ptr::null_mut(), 2);
-    let new_id = IDedMemRange::new("two range", new_range);
-
-    MEM_VEC.lock().push(new_id);
-
-    log::info!("MEM_VEC pushed again: {:#?}", MEM_VEC.lock()[2]);
-
-    MEM_VEC.lock().remove(1);
-    
-    log::info!("MEM_VEC removed 1, knew entry at 1: {:#?}", MEM_VEC.lock()[1]);
-
-    let mem_vac = MEM_VEC.lock();
-
-    let entry = mem_vac.find_id("null range");
-    
-    log::info!("MEM_VEC null range: {:#?}", entry);
-
-    let entry = mem_vac.find_id("mal range");
-    
-    log::info!("MEM_VEC mal range: {:#?}", entry);
-    
 
     paging::init();
 }
@@ -115,7 +78,7 @@ pub fn memory_map(devicetree_ptr: *const u8) {
     let free = IDedMemRange::new("free0", free_range);
 
     let mem_vec = &mut MEM_VEC.lock();
-    mem_vec.push(memory);
+    mem_vec.initialize(memory);
     mem_vec.push(unknown);
     mem_vec.push(kernel);
     mem_vec.push(heap);
@@ -203,7 +166,7 @@ impl ConstMemRange {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct MutMemRange {
     base: *mut u8,
     length: usize
@@ -262,6 +225,7 @@ impl MutMemRange {
     }
 }
 
+#[derive(Clone, Copy)]
 pub struct IDedMemRange {
     id: [u8; 12],
     pub range: MutMemRange

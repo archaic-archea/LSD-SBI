@@ -21,7 +21,7 @@ pub fn init() {
 
         INT_SSCRATCH.kernel_thread_local = crate::utils::linker::__tdata_start.as_ptr().cast_mut();
         INT_SSCRATCH.kernel_global_ptr = crate::utils::linker::__global_pointer.as_ptr().cast_mut();
-        INT_SSCRATCH.kernel_stack_top = crate::mem::MEMMAP.interrupt_stack.base();
+        INT_SSCRATCH.kernel_stack_top = crate::mem::MEM_VEC.lock().find_id("int_stack0").unwrap().data.base();
         let sscratch_ref = (&INT_SSCRATCH as *const Sscratch) as usize;
 
         core::arch::asm!(
