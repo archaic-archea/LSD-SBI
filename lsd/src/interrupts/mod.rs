@@ -311,7 +311,7 @@ fn exception(code: u64) {
         5 => log::error!("Load access fault"),
         6 => log::error!("Store/AMO address misaligned"),
         7 => log::error!("Store/AMO access fault"),
-        10 => log::error!("Store page fault"),
+        15 => log::error!("Store page fault"),
         _ => log::error!("Unknown exception {:b}", code)
     }
 
