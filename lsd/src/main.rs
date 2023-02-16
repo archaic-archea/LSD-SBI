@@ -59,13 +59,6 @@ extern "C" fn kmain(hartid: usize, devicetree_ptr: *const u8) -> ! {
         }
     }
 
-    //page fault:
-    unsafe {
-        let ptr = 0xfffffffffff as *mut u8;
-        log::debug!("Causing page fault at: {:?}", ptr);
-        *ptr = 0;
-    }
-
     hcf();
 }
 

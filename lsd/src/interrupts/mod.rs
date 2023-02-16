@@ -1,5 +1,6 @@
 use log::{log, Level};
 
+#[thread_local]
 static mut INT_SSCRATCH: Sscratch = Sscratch { 
     kernel_stack_top: core::ptr::null_mut(),
     kernel_thread_local: core::ptr::null_mut(),
