@@ -12,12 +12,12 @@ extern "C" fn kmain(hartid: usize, devicetree_ptr: *const u8) -> ! {
     use lsd::*;
 
     init_tp();
+    HART_ID.store(hartid, core::sync::atomic::Ordering::Relaxed);
     io::logger::init();
     syscon_rs::init(devicetree_ptr);
     timing::init(devicetree_ptr);
     mem::init(devicetree_ptr);
     interrupts::init();
-    HART_ID.store(hartid, core::sync::atomic::Ordering::Relaxed);
     plic::init(devicetree_ptr, current_context()..current_context() + 1);
 
     log::info!("Pagining initialized");
@@ -58,6 +58,14 @@ extern "C" fn kmain(hartid: usize, devicetree_ptr: *const u8) -> ! {
             _ => ()
         }
     }
+
+    //page fault:
+    unsafe {
+        let ptr = 0xfffffffffff as *mut u8;
+        log::debug!("Causing page fault at: {:?}", ptr);
+        *ptr = 0;
+    }
+
     hcf();
 }
 

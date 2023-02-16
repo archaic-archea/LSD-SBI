@@ -49,6 +49,7 @@ fn main() -> anyhow::Result<()> {
                     -bios opensbi-riscv64-generic-fw_jump.bin
                     -kernel lsd/target/riscv64gc-unknown-none-elf/release/lsd
                     -serial mon:stdio
+                    -no-reboot
                     {debug_log...}
             ").run()?;
         }

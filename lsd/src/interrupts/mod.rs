@@ -21,13 +21,15 @@ pub fn init() {
 
         INT_SSCRATCH.kernel_thread_local = crate::utils::linker::__tdata_start.as_ptr().cast_mut();
         INT_SSCRATCH.kernel_global_ptr = crate::utils::linker::__global_pointer.as_ptr().cast_mut();
-        INT_SSCRATCH.kernel_stack_top = crate::mem::MEM_VEC.lock().find_id("int_stack0").unwrap().data.base();
+        INT_SSCRATCH.kernel_stack_top = crate::mem::MEM_VEC.lock().find_id("int_stack0").unwrap().base();
         let sscratch_ref = (&INT_SSCRATCH as *const Sscratch) as usize;
 
         core::arch::asm!(
             "csrw sscratch, {}",
             in(reg) sscratch_ref
-        )
+        );
+
+        log::info!("Interrupts enabled")
     }
 }
 
@@ -86,8 +88,6 @@ pub extern "C" fn int_handler() {
             // Interrupts are disabled when we enter a trap
             // Switch `t6` and `sscratch`
             csrrw t6, sscratch, t6
-            
-            wfi
 
             // Store current stack pointer temporarily
             sd sp, 24(t6)
@@ -311,6 +311,7 @@ fn exception(code: u64) {
         5 => log::error!("Load access fault"),
         6 => log::error!("Store/AMO address misaligned"),
         7 => log::error!("Store/AMO access fault"),
+        10 => log::error!("Store page fault"),
         _ => log::error!("Unknown exception {:b}", code)
     }
 

@@ -18,7 +18,7 @@ pub static mut PAGING_TYPE: paging::PagingType = paging::PagingType::Sv39;
 pub fn init(devicetree_ptr: *const u8) {
     memory_map(devicetree_ptr);
 
-    let free = MEM_VEC.lock().find_id("free0").expect("No free memory").data.range.length();
+    let free = MEM_VEC.lock().find_id("free0").expect("No free memory").range.length() / 1048576;
     log::info!("Free memory: {}MiB", free);
 
     paging::init();
@@ -45,13 +45,12 @@ pub fn memory_map(devicetree_ptr: *const u8) {
     let unknown_len = kernel_base as usize - mem_base as usize;
 
     let heap_base = unsafe {kernel_base.add(kernel_len)};
-    let heap_len = 0x4000;
+    let heap_len = 0x3200000;
 
     unsafe {
         ALLOCATOR.lock().init(heap_base as usize, heap_len);
     }
 
-    
     let stack_len = 0x100000;
     let stack_base = unsafe {align_up(heap_base.add(heap_len).add(stack_len) as usize, 16)} as *mut u8;
 

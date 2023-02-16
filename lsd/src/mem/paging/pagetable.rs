@@ -1,6 +1,7 @@
 use super::{entries::Entry, physical_addr};
 
 #[derive(Debug)]
+#[repr(align(0x1000))]
 pub struct PageTable(pub [Entry; 512]);
 
 impl PageTable {
@@ -26,37 +27,27 @@ impl core::ops::IndexMut<usize> for PageTable {
 }
 
 pub struct PageTableAlloc {
-    base: *mut PageTable,
-    pub page_offset: usize
+    pub pages_used: usize
 }
 
+use alloc::alloc::{dealloc, alloc, Layout};
+
 impl PageTableAlloc {
-    pub fn new(base: *mut u8) -> Self {
-        Self { 
-            base: base as *mut PageTable, 
-            page_offset: 0
-        }
+    pub fn new() -> Self {
+        Self { pages_used: 0 }
     }
+
     pub fn alloc(&mut self) -> *mut PageTable {
         unsafe {
-            self.page_offset += 1;
+            let ptr = alloc(Layout::new::<PageTable>());
 
-            let ptr = self.base.add(self.page_offset - 1);
-            
-            for i in 0..4096 {
-                let byte_ptr = ptr as *mut u8;
-                *byte_ptr.offset(i) = 0;
-            }
-
-            ptr
+            ptr as *mut PageTable
         }
     }
 
-    pub fn dealloc(&self) {
-        panic!("Dealloc shouldnt be called on permanent page tables")
-    }
-
-    pub fn current_addr(&self) -> *mut u8 {
-        unsafe {self.base.add(self.page_offset) as *mut u8}
+    pub fn dealloc(&self, page_table: *mut PageTable) {
+        unsafe {
+            dealloc(page_table as *mut u8, Layout::new::<PageTable>())
+        }
     }
 }

@@ -3,6 +3,8 @@ pub static mut PLIC_REF: *mut Plic = core::ptr::null_mut();
 pub fn init(devicetree_ptr: *const u8, contexts: impl Iterator<Item = usize>) {
     use crate::Compat;
 
+    log::info!("PLIC initializing...");
+
     let fdt: fdt::Fdt;
     unsafe {
         fdt = fdt::Fdt::from_ptr(devicetree_ptr).unwrap();
@@ -18,7 +20,7 @@ pub fn init(devicetree_ptr: *const u8, contexts: impl Iterator<Item = usize>) {
 
     plic_ref.init(11, contexts);
 
-    plic_ref.claim(crate::current_context());
+    log::info!("PLIC Enabled")
 }
 
 #[repr(C)]
