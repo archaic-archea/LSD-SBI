@@ -22,9 +22,9 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
 name = "fdt"
-version = "0.1.4"
+version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "964f5becd44d069dca0beea2b4bc05639ae7bf3b3f5369c295aff360bb57cca2"
+checksum = "784a4df722dc6267a04af36895398f59d21d07dce47232adf31ec0ff2fa45e67"
 
 [[package]]
 name = "lock_api"
@@ -54,6 +54,7 @@ dependencies = [
  "log",
  "mmio",
  "sbi",
+ "sifive-plic",
  "spin",
  "syscon-rs",
 ]
@@ -77,10 +78,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d29ab0c6d3fc0ee92fe66e2d99f700eab17a8d57d1c1d3b748380fb20baa78cd"
 
 [[package]]
+name = "sifive-plic"
+version = "1.0.0"
+source = "git+https://github.com/archaic-archea/sifive-plic#4633d9a546b1483895f88f5ba4c43beeea823eca"
+dependencies = [
+ "fdt",
+ "log",
+ "volatile",
+]
+
+[[package]]
 name = "spin"
-version = "0.9.4"
+version = "0.9.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7f6002a767bff9e83f8eeecf883ecb8011875a21ae8da43bffb817a57e78cc09"
+checksum = "7dccf47db1b41fa1573ed27ccf5e08e3ca771cb994f776668c5ebda893b248fc"
 dependencies = [
  "lock_api",
 ]
@@ -95,3 +106,8 @@ dependencies = [
  "log",
  "mmio",
 ]
+
+[[package]]
+name = "volatile"
+version = "1.0.0"
+source = "git+https://github.com/archaic-archea/volatile#e824bfb9b46ded1b90a2f5c68d8d38eb7899d602"

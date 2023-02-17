@@ -77,7 +77,7 @@ pub fn memory_map(devicetree_ptr: *const u8) {
     let free = IDedMemRange::new("free0", free_range);
 
     let mem_vec = &mut MEM_VEC.lock();
-    mem_vec.initialize(memory);
+    mem_vec.push(memory);
     mem_vec.push(unknown);
     mem_vec.push(kernel);
     mem_vec.push(heap);

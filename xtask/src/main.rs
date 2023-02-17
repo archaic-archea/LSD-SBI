@@ -30,15 +30,20 @@ fn main() -> anyhow::Result<()> {
             build_kernel()?;
 
             let debug_log: &[&str] = match true {
-                //true => &["-D", "debug.log", "-d", "int,guest_errors"],
-                true => &["-d", "int,guest_errors"],
+                true => &["-D", "debug.log", "-d", "int,guest_errors"],
+                //true => &["-d", "int,guest_errors"],
                 false => &[],
+            };
+
+            let aia: &[&str] = match false {
+                true => &["-machine", "virt,aclint=on,aia=aplic"],
+                false => &["-machine", "virt,aclint=on"]
             };
 
             #[rustfmt::skip]
             xshell::cmd!("
                 qemu-system-riscv64
-                    -machine virt
+                    {aia...}
                     -cpu rv64
                     -smp 1
                     -m 8G

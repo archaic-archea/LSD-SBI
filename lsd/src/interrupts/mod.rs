@@ -34,7 +34,7 @@ pub fn init() {
     }
 }
 
-/// Sets the interrupt vector address to the given function
+/// Sets the trap handler address to the given function
 pub unsafe fn set_handler_fn(f: extern "C" fn()) {
     core::arch::asm!("csrw stvec, {}", in(reg) f);
 }
@@ -320,11 +320,26 @@ fn exception(code: u64) {
 }
 
 fn interrupt(code: u64) {
+    use core::sync::atomic::Ordering;
+
     match code {
-        5 => unsafe {
-            super::timing::WAIT = false;
+        1 => {
+            //ipi
+            let id = crate::HART_ID.load(Ordering::Relaxed);
+            let mswi_base = crate::MSWI.load(Ordering::Relaxed);
+            unsafe {
+                *mswi_base.add(id) = 0;
+            }
+
+            log::info!("IPI occured, targeting id: {}", id);
+        },
+        5 => {
+            //timer interrupt
+            super::timing::WAIT.store(false, Ordering::Relaxed);
+            log::info!("Timer interrupt");
         },
         9 => {
+            //plic interrupt
             plic_int()
         },
         _ => log::error!("Error has occured, handler was called with vector: {:b}", code),
@@ -332,11 +347,9 @@ fn interrupt(code: u64) {
 }
 
 fn plic_int() {
-    use crate::plic;
-
     let context = crate::current_context();
 
-    let plic = unsafe {&mut *plic::PLIC_REF};
+    let plic = unsafe {&mut *crate::plic::PLIC_REF};
     let pot_int = plic.claim(context);
 
     match pot_int {

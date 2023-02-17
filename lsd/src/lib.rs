@@ -13,6 +13,9 @@ use core::sync::atomic;
 #[thread_local]
 pub static HART_ID: atomic::AtomicUsize = atomic::AtomicUsize::new(0);
 
+pub static SSWI: atomic::AtomicPtr<u32> = atomic::AtomicPtr::new(core::ptr::null_mut());
+pub static MSWI: atomic::AtomicPtr<u32> = atomic::AtomicPtr::new(core::ptr::null_mut());
+
 use log::{log, Level};
 
 pub mod io;
@@ -108,27 +111,23 @@ impl<T> LLVec<T> {
         Self { start: None, length: 0 }
     }
 
-    pub fn initialize(&mut self, data: T) {
-        use alloc::alloc;
-
-        unsafe {
-            let new_entry_ptr = alloc::alloc(alloc::Layout::new::<LLVecEntry<T>>()) as *mut LLVecEntry<T>;
-            *new_entry_ptr = LLVecEntry::new(data);
-            self.start = Some(&mut *new_entry_ptr);
-        }
-
-        self.length += 1;
-    }
-
     pub fn push(&mut self, data: T) {
         use alloc::alloc;
 
-        unsafe {
-            let len = self.length;
-
-            let new_entry_ptr = alloc::alloc(alloc::Layout::new::<LLVecEntry<T>>()) as *mut LLVecEntry<T>;
-            *new_entry_ptr = LLVecEntry::new(data);
-            self[len - 1].next = Some(&mut *new_entry_ptr);
+        if self.length == 0 {
+            unsafe {
+                let new_entry_ptr = alloc::alloc(alloc::Layout::new::<LLVecEntry<T>>()) as *mut LLVecEntry<T>;
+                *new_entry_ptr = LLVecEntry::new(data);
+                self.start = Some(new_entry_ptr);
+            }
+        } else {
+            unsafe {
+                let len = self.length;
+    
+                let new_entry_ptr = alloc::alloc(alloc::Layout::new::<LLVecEntry<T>>()) as *mut LLVecEntry<T>;
+                *new_entry_ptr = LLVecEntry::new(data);
+                self[len - 1].next = Some(&mut *new_entry_ptr);
+            }
         }
 
         self.length += 1;
@@ -137,12 +136,36 @@ impl<T> LLVec<T> {
     pub fn remove(&mut self, index: usize) {
         use alloc::alloc;
 
-        if index == 0 {
-            panic!("Cannot remove the first entry");
-        } else if index == self.length - 1 {
-            panic!("Cannot remove end(yet)");
-        } else if index >= self.length {
+        if index >= self.length {
             panic!("Over index of LLVec");
+        } else if index == 0 {
+            unsafe {
+                let current_entry = &*self.start.unwrap();
+
+                let current_entry_ptr = current_entry as *const LLVecEntry<T>;
+                
+                if self.length == 1 {
+                    alloc::dealloc(current_entry_ptr.cast_mut() as *mut u8, alloc::Layout::new::<LLVecEntry<T>>());
+                } else {
+                    let next_entry = current_entry.next.unwrap();
+
+                    self.start = Some(next_entry);
+                }
+
+                return;
+            }
+        } else if index == self.length - 1 {
+            let previous_entry = &self[self.length - 2];
+            
+            unsafe {
+                let current_entry = &*previous_entry.next.unwrap();
+
+                let current_entry_ptr = current_entry as *const LLVecEntry<T>;
+
+                alloc::dealloc(current_entry_ptr.cast_mut() as *mut u8, alloc::Layout::new::<LLVecEntry<T>>());
+                
+                return;
+            }
         }
 
         let previous_entry = &mut self[index - 1];

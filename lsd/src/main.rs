@@ -14,13 +14,11 @@ extern "C" fn kmain(hartid: usize, devicetree_ptr: *const u8) -> ! {
     init_tp();
     HART_ID.store(hartid, core::sync::atomic::Ordering::Relaxed);
     io::logger::init();
-    syscon_rs::init(devicetree_ptr);
-    timing::init(devicetree_ptr);
     mem::init(devicetree_ptr);
     interrupts::init();
+    syscon_rs::init(devicetree_ptr);
+    timing::init(devicetree_ptr);
     plic::init(devicetree_ptr, current_context()..current_context() + 1);
-
-    log::info!("Pagining initialized");
 
     let fdt: fdt::Fdt;
     unsafe {
@@ -43,7 +41,7 @@ extern "C" fn kmain(hartid: usize, devicetree_ptr: *const u8) -> ! {
 
     for node in fdt.all_nodes() {
         match node.name.contains("virtio") {
-            true =>{
+            true => {
                 use drivers::virtio::{DeviceType, VirtIoHeader};
                 let base = node.reg().unwrap().next().unwrap().starting_address.cast_mut() as *mut VirtIoHeader;
                 
@@ -55,10 +53,40 @@ extern "C" fn kmain(hartid: usize, devicetree_ptr: *const u8) -> ! {
                     log::info!("Virtio device found: {:?}", dev_type);
                 }
             },
-            _ => ()
+            _ => {
+                log::info!("Found device: {}", node.name);
+            }
         }
     }
 
+    let sswi = fdt.find_compatible(&["riscv,aclint-sswi"]).expect("No sswi");
+    let mswi = fdt.find_compatible(&["riscv,aclint-mswi"]).expect("No mswi");
+    let sswi_region = sswi.reg().unwrap().next().unwrap();
+    let mswi_region = mswi.reg().unwrap().next().unwrap();
+
+    unsafe {
+        use core::sync::atomic::Ordering;
+        let setssip = sswi_region.starting_address.cast_mut() as *mut u32;
+        SSWI.store(setssip, Ordering::Relaxed);
+        let msip = mswi_region.starting_address.cast_mut() as *mut u32;
+        MSWI.store(msip, Ordering::Relaxed);
+
+        //generate IPI?
+        //*setssip.add(0) = 1;
+    }
+
+    //TODO: Enter userspace
+    unsafe {
+        core::arch::asm!("
+            li a0, 2
+            li a1, 2
+            li a2, 2
+            li a3, 2
+            ecall
+        ")
+    };
+
+    log::error!("Userspace not found, halt looping");
     hcf();
 }
 

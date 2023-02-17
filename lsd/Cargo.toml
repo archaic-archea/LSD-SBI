@@ -6,9 +6,10 @@ edition = "2018"
 
 [dependencies]
 bitflags = "1.3.2"
-fdt = "0.1.4"
+fdt = "0.1.5"
 log = "0.4"
 mmio = "2.1.0"
 sbi = "0.2.0"
 spin = "0.9"
 syscon-rs = "0.1.1"
+sifive-plic = { git = "https://github.com/archaic-archea/sifive-plic" }
