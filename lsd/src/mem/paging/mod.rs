@@ -26,7 +26,6 @@ pub fn init() {
     //Create mapper for mapping memory
     let mut mapper = mapping::Mapper::new(root_table, allocator, unsafe {super::PAGING_TYPE});
 
-    log::info!("Mapping heap");
     //Loop through all non-free memory addresses to map while stepping up by 4096 each loop
     for addr in heap.range().step_by(PageSize::Small as usize) {
         let phys = physical_addr::PhyscialAddress::new(addr);
@@ -36,12 +35,9 @@ pub fn init() {
         use entries::EntryFlags;
         let flags = EntryFlags::ACCESSED | EntryFlags::DIRTY | EntryFlags::READ | EntryFlags::WRITE | EntryFlags::VALID;
 
-        //log::debug!("Mapping mem: {:?} to {:?}", phys, virt);
         mapper.recursive_map(phys, virt, flags, PageSize::Small).expect("Failed to map address");
     }
-    log::info!("Heap mapped");
-
-    log::info!("Mapping stack");
+    
     //Loop through all non-free memory addresses to map while stepping up by 4096 each loop
     for addr in stack.range().step_by(PageSize::Small as usize) {
         let phys = physical_addr::PhyscialAddress::new(addr);
@@ -51,12 +47,9 @@ pub fn init() {
         use entries::EntryFlags;
         let flags = EntryFlags::ACCESSED | EntryFlags::DIRTY | EntryFlags::READ | EntryFlags::WRITE | EntryFlags::VALID;
 
-        //log::debug!("Mapping mem: {:?} to {:?}", phys, virt);
         mapper.recursive_map(phys, virt, flags, PageSize::Small).expect("Failed to map address");
     }
-    log::info!("Stack mapped");
-
-    log::info!("Mapping interrupt stack");
+    
     //Loop through all non-free memory addresses to map while stepping up by 4096 each loop
     for addr in int_stack.range().step_by(PageSize::Small as usize) {
         let phys = physical_addr::PhyscialAddress::new(addr);
@@ -66,41 +59,24 @@ pub fn init() {
         use entries::EntryFlags;
         let flags = EntryFlags::ACCESSED | EntryFlags::DIRTY | EntryFlags::READ | EntryFlags::WRITE | EntryFlags::VALID;
 
-        //log::debug!("Mapping mem: {:?} to {:?}", phys, virt);
         mapper.recursive_map(phys, virt, flags, PageSize::Small).expect("Failed to map address");
     }
-    log::info!("Stack interrupt mapped");
 
-    log::info!("Mapping kernel");
+    let mut kern_true = physical_addr::PhyscialAddress::new(0x80200000);
     //Loop through all addresses to map while stepping up by 4096 each loop
     for addr in kern.range().step_by(PageSize::Small as usize) {
-        let phys = physical_addr::PhyscialAddress::new(addr);
+        let phys = kern_true;
         let virt = virtual_addr::VirtualAddress::new(addr);
 
         //make the PTE accessed, dirty, executable, readable, writable, and valid
         use entries::EntryFlags;
         let flags = EntryFlags::ACCESSED | EntryFlags::DIRTY | EntryFlags::EXECUTE | EntryFlags::READ | EntryFlags::WRITE | EntryFlags::VALID;
 
-        //log::debug!("Mapping mem: {:?} to {:?}", phys, virt);
         mapper.recursive_map(phys, virt, flags, PageSize::Small).expect("Failed to map address");
+
+        kern_true.0 += PageSize::Small as u64;
     }
-    log::info!("Kernel mapped");
 
-    /*log::info!("Mapping Mem");
-    for addr in mem.range().step_by(PageSize::Small as usize) {
-        let phys = physical_addr::PhyscialAddress::new(addr);
-        let virt = virtual_addr::VirtualAddress::new(addr);
-
-        //make the PTE accessed, dirty, executable, readable, writable, and valid
-        use entries::EntryFlags;
-        let flags = EntryFlags::ACCESSED | EntryFlags::DIRTY | EntryFlags::EXECUTE | EntryFlags::READ | EntryFlags::WRITE | EntryFlags::VALID;
-
-        //log::debug!("Mapping mem: {:?} to {:?}", phys, virt);
-        mapper.recursive_map(phys, virt, flags, PageSize::Small).expect("Failed to map address");
-    }
-    log::info!("Mem mapped");*/
-
-    log::info!("Mapping IO");
     let range_bot = 0;
     let range_top = 0x8000_0000;
     //Map IO
@@ -112,10 +88,8 @@ pub fn init() {
         use entries::EntryFlags;
         let flags = EntryFlags::ACCESSED | EntryFlags::DIRTY | EntryFlags::READ | EntryFlags::WRITE | EntryFlags::VALID;
 
-        //log::debug!("Mapping IO: {:?} to {:?}", phys, virt);
         mapper.recursive_map(phys, virt, flags, PageSize::Small).expect("Failed to map address");
     }
-    log::info!("IO mapped");
 
     //map free memory
     for addr in free.range().step_by(PageSize::Small as usize) {
@@ -124,9 +98,8 @@ pub fn init() {
 
         //make the PTE accessed, dirty, readable, writable, and valid
         use entries::EntryFlags;
-        let flags = EntryFlags::ACCESSED | EntryFlags::DIRTY | EntryFlags::READ | EntryFlags::WRITE | EntryFlags::VALID;
+        let flags = EntryFlags::ACCESSED | EntryFlags::DIRTY | EntryFlags::READ | EntryFlags::WRITE | EntryFlags::VALID | EntryFlags::EXECUTE | EntryFlags::USER_ACCESSIBLE;
 
-        //log::debug!("Mapping IO: {:?} to {:?}", phys, virt);
         mapper.recursive_map(phys, virt, flags, PageSize::Small).expect("Failed to map address");
     }
 
@@ -134,11 +107,7 @@ pub fn init() {
 
     //enable paging
     let state = SatpState::new(PagingType::Sv39, 0, unsafe {&*table_ptr}.ppn());
-    log::info!("Enabling paging");
     Satp::write_state(state);
-    log::info!("Paging enabled");
-    log::info!("Pagetables used: {}", mapper.alloc.pages_used);
-    //log::info!("Unpaged memory starts at {:?}", free.base());
 }
 
 pub struct Page([u8; PAGE_SIZE]);

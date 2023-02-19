@@ -10,6 +10,7 @@ bitflags::bitflags! {
 
     pub struct Sstatus: usize {
         const SIE = 1 << 1; // Supervisor-level interrupt enable
+        const SPP = 1 << 8; // 0 means that USER mode is enabled
     }
 
     pub struct Satp: usize {
@@ -20,6 +21,8 @@ bitflags::bitflags! {
         const PPN_MASK = 0xf_ffff_ffff << 0;
     }
 }
+
+pub struct Sepc(u64);
 
 impl Sie {
     pub fn supervisor_all() -> Self {
@@ -161,5 +164,33 @@ impl SatpState {
         res += (self.mode.as_usize() as u64) << 60;
 
         res
+    }
+}
+
+impl Sepc {
+    pub fn new(bits: u64) -> Self {
+        Self(bits)
+    }
+
+    pub fn write(&self) {
+        unsafe {
+            core::arch::asm!(
+                "csrw sepc, {}",
+                in(reg) self.0
+            )
+        }
+    }
+
+    pub fn read() -> Self {
+        let sepc: u64;
+
+        unsafe {
+            core::arch::asm!(
+                "csrr {}, sepc",
+                out(reg) sepc
+            );
+        }
+
+        Self(sepc)
     }
 }

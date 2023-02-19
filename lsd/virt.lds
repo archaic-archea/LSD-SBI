@@ -4,7 +4,8 @@ ENTRY(_boot);
 
 
 SECTIONS {
-    . = 0x80200000;
+    . = 0xffffffff80000000;
+    
     .text : {
         PROVIDE(__text_start = .);
         PROVIDE(KERNEL_START = .);

@@ -54,17 +54,6 @@ pub fn interrupt_vector() -> (bool, u64) {
     ((x & (!mask)) == 0, x & mask)
 }
 
-#[no_mangle]
-#[repr(align(4))]
-pub extern "C" fn handler() {
-    let int_vec = interrupt_vector();
-
-    match int_vec {
-        (true, code) => exception(code),
-        (false, code) => interrupt(code)
-    }
-}
-
 #[repr(C)]
 pub struct TrapFrame {
     pub sepc: usize,
@@ -302,6 +291,17 @@ pub extern "C" fn int_handler() {
     }
 }
 
+#[no_mangle]
+#[repr(align(4))]
+pub extern "C" fn handler() {
+    let int_vec = interrupt_vector();
+
+    match int_vec {
+        (true, code) => exception(code),
+        (false, code) => interrupt(code)
+    }
+}
+
 fn exception(code: u64) {
     match code {
         0 => log::error!("Instruction address misaligned"),
@@ -312,6 +312,7 @@ fn exception(code: u64) {
         5 => log::error!("Load access fault"),
         6 => log::error!("Store/AMO address misaligned"),
         7 => log::error!("Store/AMO access fault"),
+        12 => log::error!("Instruction page fault"),
         15 => log::error!("Store page fault"),
         _ => log::error!("Unknown exception {:b}", code)
     }
@@ -336,7 +337,6 @@ fn interrupt(code: u64) {
         5 => {
             //timer interrupt
             super::timing::WAIT.store(false, Ordering::Relaxed);
-            log::info!("Timer interrupt");
         },
         9 => {
             //plic interrupt
@@ -353,7 +353,7 @@ fn plic_int() {
     let pot_int = plic.claim(context);
 
     match pot_int {
-        None => (),
+        None => log::error!("No interrupt found for plic"),
         Some(int_claim) => {
             let int = int_claim.interrupt_id();
 

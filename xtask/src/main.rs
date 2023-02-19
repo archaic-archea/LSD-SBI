@@ -36,8 +36,8 @@ fn main() -> anyhow::Result<()> {
             };
 
             let aia: &[&str] = match false {
-                true => &["-machine", "virt,aclint=on,aia=aplic"],
-                false => &["-machine", "virt,aclint=on"]
+                true => &["-machine", "virt,aia=aplic"],
+                false => &["-machine", "virt"]
             };
 
             #[rustfmt::skip]

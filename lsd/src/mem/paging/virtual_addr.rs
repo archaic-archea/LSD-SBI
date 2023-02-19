@@ -1,10 +1,10 @@
 use super::physical_addr::PhyscialAddress;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct VirtualAddress(u64);
 
 impl VirtualAddress {
-    pub fn new(addr: u64) -> Self {
+    pub const fn new(addr: u64) -> Self {
         Self(addr)
     }
 

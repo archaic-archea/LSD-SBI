@@ -18,9 +18,6 @@ pub static mut PAGING_TYPE: paging::PagingType = paging::PagingType::Sv39;
 pub fn init(devicetree_ptr: *const u8) {
     memory_map(devicetree_ptr);
 
-    let free = MEM_VEC.lock().find_id("free0").expect("No free memory").range.length() / 1048576;
-    log::info!("Free memory: {}MiB", free);
-
     paging::init();
 }
 

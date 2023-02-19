@@ -1,7 +1,7 @@
 use super::virtual_addr::VirtualAddress;
 
-#[derive(Debug)]
-pub struct PhyscialAddress(u64);
+#[derive(Debug, Clone, Copy)]
+pub struct PhyscialAddress(pub(super) u64);
 
 impl PhyscialAddress {
     pub fn new(addr: u64) -> Self {
